@@ -5,8 +5,8 @@ from sqlalchemy import pool
 
 from alembic import context
 from api.database import Base
-from api.domain.client_model import ClientModel
 from api.domain.gender_model import GenderModel
+from api.domain.client_model import ClientModel
 from api.domain.promotion_model import PromotionModel
 from api.domain.status_type_model import StatusTypeModel
 from api.domain.place_type_model import PlaceTypeModel
@@ -14,6 +14,11 @@ from api.domain.point_type_model import PointTypeModel
 from api.domain.direction_model import DirectionModel
 from api.domain.type_accrual_model import TypeAccrualModel
 from api.domain.referrals_model import ReferralsModel
+from api.domain.addresses_model import AddressesModel
+from api.domain.services_model import ServicesModel
+from api.domain.make_appointment_model import MakeAppointmentModel
+from api.domain.client_balance import ClientBalanceModel
+from api.domain.point_logs_model import PointLogsModel
 
 
 # this is the Alembic Config object, which provides

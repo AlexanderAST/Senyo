@@ -1,4 +1,5 @@
-from sqlalchemy import Integer, Column, String
+from sqlalchemy import Column, Integer, String
+from sqlalchemy.orm import relationship
 from api.database import Base
 
 class TypeAccrualModel(Base):

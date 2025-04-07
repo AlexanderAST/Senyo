@@ -1,8 +1,8 @@
-"""fix client model
+"""Fix ReferralsModel relationship
 
-Revision ID: 15358242b2a4
-Revises: 5aee8f188912
-Create Date: 2025-04-06 01:55:08.585693
+Revision ID: 78021944c3b3
+Revises: 7fe5215a4d64
+Create Date: 2025-04-07 00:36:31.094535
 
 """
 from typing import Sequence, Union
@@ -12,8 +12,8 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision: str = '15358242b2a4'
-down_revision: Union[str, None] = '5aee8f188912'
+revision: str = '78021944c3b3'
+down_revision: Union[str, None] = '7fe5215a4d64'
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
 
