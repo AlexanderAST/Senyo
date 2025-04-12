@@ -1,5 +1,4 @@
-from sqlalchemy import update
-from fastapi import HTTPException
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from api.domain.client_model import ClientModel
 from api.dto.client_dto import ClientCreateDTO, ClientUpdateDTO
@@ -20,7 +19,7 @@ class ClientRepository:
         client = await db.get(ClientModel, client_data.id)
         
         if not client:
-            raise HTTPException(status_code=404, detail="Client not found")
+            return None
         
         update_data = client_data.model_dump(exclude_unset=True)
         
@@ -32,3 +31,15 @@ class ClientRepository:
         await db.refresh(client)
 
         return client
+    
+    async def get_client(self, db:AsyncSession, id:int):
+        query = select(ClientModel).where(ClientModel.id == id)
+        result = await db.execute(query)
+
+        return result.scalars().first()
+    
+    async def get_clients(self, db:AsyncSession):
+        query = select(ClientModel)
+        result = await db.execute(query)
+        
+        return result.scalars().all()
