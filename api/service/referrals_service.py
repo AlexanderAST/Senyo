@@ -18,3 +18,15 @@ class ReferralsService:
         )
         
         return await self.referrals_repository.create_referral(db, referrals_data)
+    
+    
+    async def get_referrals(self, db:AsyncSession, client_id:int):
+        referrals = await self.referrals_repository.get_referrals(db, client_id)
+        
+        if referrals is None:
+            raise HTTPException(
+                status_code=404,
+                detail="Referrals not found"
+            )
+        
+        return referrals

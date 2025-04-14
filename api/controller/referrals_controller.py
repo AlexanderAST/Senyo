@@ -22,3 +22,11 @@ async def create_referrals(referrals:CreateReferralRequestDTO, db:AsyncSession=D
         )
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+@router.get("/referrals/{client_id}")
+async def get_referrals(client_id:int, db:AsyncSession= Depends(get_db)):
+    try:
+        referrals_data = await referrals_service.get_referrals(db, client_id)
+        return referrals_data
+    except Exception as e:
+            raise HTTPException(status_code=500, detail=str(e))

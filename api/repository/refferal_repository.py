@@ -1,3 +1,4 @@
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from api.domain.referrals_model import ReferralsModel
 from api.dto.referral_dto import CreateReferralDTO
@@ -14,3 +15,9 @@ class ReferralsRepository:
         await db.commit()
         await db.refresh(new_referral)
         return new_referral
+    
+    async def get_referrals(self, db:AsyncSession, client_id:int):
+        query = select(ReferralsModel).where(ReferralsModel.id_client == client_id)
+        result = await db.execute(query)
+        
+        return result.scalars().all()
