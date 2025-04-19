@@ -1,22 +1,17 @@
 from fastapi import APIRouter, Depends, HTTPException, Header
 from sqlalchemy.ext.asyncio import AsyncSession
 from api.service.client_service import ClientService
-from api.dto.client_dto import ClientCreateDTO, ClientCreateResponseDTO, ClientUpdateDTO
+from api.dto.client_dto import ClientCreateDTO, ClientUpdateDTO
 from api.database import get_db
 from api.repository.client_repository import ClientRepository
 
 router= APIRouter()
 client_service = ClientService(ClientRepository())
 
-@router.post("/client", response_model=ClientCreateResponseDTO)
+@router.post("/client")
 async def sing_up(client:ClientCreateDTO, db:AsyncSession = Depends(get_db)):
     try:
-        created_client = await client_service.create_client(db, client)
-        return ClientCreateResponseDTO(
-            id = created_client.id,
-            telegram_id = created_client.telegram_id,
-            status = "success"
-        )
+        return await client_service.create_client(db, client)
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
     
@@ -33,18 +28,14 @@ async def update_info(client: ClientUpdateDTO, db:AsyncSession = Depends(get_db)
 @router.get("/client/{client_id}")
 async def info(client_id:int, db:AsyncSession = Depends(get_db)):
     try:
-        client_data = await client_service.get_info(db, client_id)
-        
-        return client_data
+        return await client_service.get_info(db, client_id) 
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
     
 
-@router.get("/admin-get-clients")
+@router.get("/admin/get-clients")
 async def get_clients(db:AsyncSession= Depends(get_db)):
     try:
-        clients = await client_service.get_clients(db)
-        
-        return {"clients": clients}
+        return await client_service.get_clients(db)
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))

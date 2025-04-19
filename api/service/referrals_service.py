@@ -1,6 +1,6 @@
 from fastapi import HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
-from api.dto.referral_dto import CreateReferralDTO, CreateReferralRequestDTO
+from api.dto.referral_dto import ReferralDTO, CreateReferralRequestDTO, UpdateReferralDTO
 from api.repository.refferal_repository import ReferralsRepository
 
 
@@ -11,7 +11,7 @@ class ReferralsService:
     
     async def create_referral(self, db:AsyncSession, new_referrals_data:CreateReferralRequestDTO):
         
-        referrals_data = CreateReferralDTO(
+        referrals_data = ReferralDTO(
             id_client=new_referrals_data.id_client,
             refferal_phone=new_referrals_data.refferal_phone,
             is_active=False
@@ -30,3 +30,24 @@ class ReferralsService:
             )
         
         return referrals
+    
+    async def update_referrals(self, db:AsyncSession, referrals_data:UpdateReferralDTO):
+        referral = await self.referrals_repository.update_referral(db, referrals_data)
+        
+        if referral is None:
+            raise HTTPException(status_code=404, detail="Referral not found")
+        
+        return referral
+    
+    
+        
+    async def get_referrals_phone(self, db:AsyncSession, phone:str):
+        referrals = await self.referrals_repository.get_referrals_phone(db, phone)
+        
+        if referrals is None:
+            raise HTTPException(
+                status_code=404,
+                detail="Referrals not found"
+            )
+        
+        return referrals.id

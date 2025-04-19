@@ -2,7 +2,12 @@ from fastapi import HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 from api.repository.client_repository import ClientRepository
 from api.dto.client_dto import ClientCreateDTO, ClientUpdateDTO
+from api.dto.referral_dto import UpdateReferralDTO
+from api.service.referrals_service import ReferralsService
+from api.repository.refferal_repository import ReferralsRepository
+from api.dto.referral_dto import UpdateReferralDTO
 
+referrals_service = ReferralsService(ReferralsRepository())
 
 class ClientService:
     def __init__(self, client_repository:ClientRepository):
@@ -12,11 +17,19 @@ class ClientService:
     async def create_client(self, db:AsyncSession, client_data:ClientCreateDTO):        
         return await self.client_repository.create_client(db, client_data)
     
-    async def update_client(self, db:AsyncSession, client_data: ClientUpdateDTO):
-        
+    async def update_client(self, db:AsyncSession, client_data: ClientUpdateDTO):       
         client = await self.client_repository.update_client(db, client_data)
         if client is None:
             raise HTTPException(status_code=404, detail="Client not found")
+        
+                
+        if client_data.phone is not None:
+            referrals = await referrals_service.get_referrals_phone(db, client_data.phone)
+            
+            if referrals is not None:
+                referral_data = UpdateReferralDTO(id=referrals, is_active=True)
+                await referrals_service.update_referrals(db,referral_data)
+                
         
         return client
     
@@ -28,7 +41,7 @@ class ClientService:
                 detail="Client not found"
             )
         
-        return{"id":client_data.id,"surname":client_data.surname,"name":client_data.name, "phone":client_data.phone, "id_gender":client_data.id_gender, "telegram_id": client_data.telegram_id}
+        return client_data
     
     
     async def get_clients(self, db:AsyncSession):

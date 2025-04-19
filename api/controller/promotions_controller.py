@@ -9,18 +9,23 @@ router = APIRouter()
 promotions_service = PromotionsService(PromotionsRepository())
 
 
-@router.post("/promotions")
+@router.post("/admin/promotions")
 async def create_promotion(promotion:PromotionsCreate, db:AsyncSession = Depends(get_db)):
     try:
-        new_promotion = await promotions_service.create_promotion(db, promotion)
-        return new_promotion
+        return await promotions_service.create_promotion(db, promotion)
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
     
-@router.delete("/promotions")
+@router.delete("/admin/promotions")
 async def delete_promotion(id:int, db:AsyncSession= Depends(get_db)):
     try:
-        result = await promotions_service.delete_promotiom(db, id)
-        return result
+        return await promotions_service.delete_promotiom(db, id)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.get("/promotions")
+async def get_promotions(db:AsyncSession = Depends(get_db)):
+    try:
+        return await promotions_service.get_promotions(db)
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))

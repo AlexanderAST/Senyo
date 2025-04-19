@@ -1,3 +1,4 @@
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from api.dto.promotions_dto import PromotionsCreate
 from api.domain.promotion_model import PromotionModel
@@ -28,3 +29,9 @@ class PromotionsRepository:
         await db.commit()
         
         return id
+
+    async def get_promotions(self, db:AsyncSession):
+        query = select(PromotionModel)
+        result = await db.execute(query)
+        
+        return result.scalars().all()

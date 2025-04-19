@@ -13,3 +13,14 @@ class PromotionsService:
     async def delete_promotiom(self, db:AsyncSession, id:int):
         id = await self.promotions_repository.delete_promotion(db, id)
         return {"status":"success", "id":id}
+    
+    async def get_promotions(self, db:AsyncSession):
+        promotions = await self.promotions_repository.get_promotions(db)
+        
+        if promotions is None:
+            raise HTTPException(
+                status_code=404,
+                detail="Clients not found"
+            )
+        
+        return promotions

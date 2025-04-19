@@ -1,0 +1,30 @@
+version: '3.8'
+
+services:
+  app:
+    build: .
+    volumes:
+      - ./api:/app/api
+    ports:
+      - "6565:6565"
+    environment:
+      - DB_HOST=db
+      - DB_PWD=qwerty
+      - DB_USER=postgres
+      - DB_NAME=postgres
+      - DB_PORT=5432
+    depends_on:
+      - db
+
+  db:
+    image: postgres:15
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: qwerty
+    ports:
+      - "5440:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+volumes:
+  postgres_data:

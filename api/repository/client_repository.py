@@ -2,7 +2,6 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from api.domain.client_model import ClientModel
 from api.dto.client_dto import ClientCreateDTO, ClientUpdateDTO
-from api.domain.client_model import ClientModel
 
 class ClientRepository:
     async def create_client(self, db:AsyncSession, client_data: ClientCreateDTO):
