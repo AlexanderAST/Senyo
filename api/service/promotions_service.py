@@ -1,7 +1,7 @@
 from fastapi import HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 from api.dto.promotions_dto import PromotionsCreate
-from api.repository.promotions_repository import PromotionsRepository
+from api.repository.promotions_repository import PromotionsRepository, PromotionsUpdate
 
 class PromotionsService:
     def __init__(self, promotions_repository:PromotionsRepository):
@@ -24,3 +24,11 @@ class PromotionsService:
             )
         
         return promotions
+
+    async def update_promotions(self, db:AsyncSession, promotion:PromotionsUpdate):
+        new_promotion = await self.promotions_repository.update_promptions(db, promotion)
+        
+        if new_promotion is None:
+            raise HTTPException(status_code=404,detail="Promotion not found")
+        
+        return new_promotion

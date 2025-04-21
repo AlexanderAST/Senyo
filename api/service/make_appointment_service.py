@@ -1,7 +1,7 @@
 from fastapi import HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 from api.repository.make_appointment_repository import AppointemntRepository
-from api.dto.make_appointment_dto import CreateAppointment, RequestAppointment
+from api.dto.make_appointment_dto import CreateAppointment, RequestAppointment, UpdateAppointment
 
 class AppointmentService:
     def __init__(self, appointment_repository:AppointemntRepository):
@@ -41,3 +41,10 @@ class AppointmentService:
             )
         
         return appointments
+
+    async def update_appointment(self, db:AsyncSession, appointment:UpdateAppointment):
+        new_appointment = await self.appointment_repository.update_appointment(db, appointment)
+        if new_appointment is None:
+            raise HTTPException(status_code=404, detail="Appointment not found")
+        
+        return new_appointment

@@ -39,15 +39,15 @@ class ReferralsService:
         
         return referral
     
-    
+    async def update_referrals_phone(self, db:AsyncSession, referrals_data:UpdateReferralDTO):
+        referral = await self.referrals_repository.update_referral(db, referrals_data)
+        
+        return referral
         
     async def get_referrals_phone(self, db:AsyncSession, phone:str):
         referrals = await self.referrals_repository.get_referrals_phone(db, phone)
         
         if referrals is None:
-            raise HTTPException(
-                status_code=404,
-                detail="Referrals not found"
-            )
+            return None
         
         return referrals.id

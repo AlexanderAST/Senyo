@@ -1,6 +1,6 @@
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
-from api.dto.promotions_dto import PromotionsCreate
+from api.dto.promotions_dto import PromotionsCreate, PromotionsUpdate
 from api.domain.promotion_model import PromotionModel
 
 class PromotionsRepository:
@@ -35,3 +35,21 @@ class PromotionsRepository:
         result = await db.execute(query)
         
         return result.scalars().all()
+    
+    async def update_promptions(self, db:AsyncSession, promotion:PromotionsUpdate):
+        new_promotions = await db.get(PromotionModel, promotion.id)
+        
+        if not new_promotions:
+            return None
+        
+        update_promotion = promotion.model_dump(exclude_unset=True)
+        
+        for key, value in update_promotion.items():
+            if key != "id":
+                setattr(new_promotions, key, value)
+            
+        
+        await db.commit()
+        await db.refresh(new_promotions)
+        
+        return new_promotions

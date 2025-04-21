@@ -28,7 +28,7 @@ class ClientService:
             
             if referrals is not None:
                 referral_data = UpdateReferralDTO(id=referrals, is_active=True)
-                await referrals_service.update_referrals(db,referral_data)
+                await referrals_service.update_referrals_phone(db,referral_data)
                 
         
         return client

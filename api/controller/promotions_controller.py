@@ -3,7 +3,7 @@ from fastapi import APIRouter, HTTPException, Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 from api.service.promotions_service import PromotionsService
 from api.repository.promotions_repository import PromotionsRepository
-from api.dto.promotions_dto import PromotionsCreate
+from api.dto.promotions_dto import PromotionsCreate, PromotionsUpdate
 
 router = APIRouter()
 promotions_service = PromotionsService(PromotionsRepository())
@@ -27,5 +27,13 @@ async def delete_promotion(id:int, db:AsyncSession= Depends(get_db)):
 async def get_promotions(db:AsyncSession = Depends(get_db)):
     try:
         return await promotions_service.get_promotions(db)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.put("/admin/promotions")
+async def update_promotions(promotion:PromotionsUpdate, db:AsyncSession = Depends(get_db)):
+    try:
+        await promotions_service.update_promotions(db, promotion)
+        return {"status":"updated success"}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
