@@ -27,6 +27,7 @@ class RequestAppointment(BaseModel):
     final_sum:float
     id_services:int
     id_place_type:int
+
     
     
 
@@ -45,3 +46,17 @@ class UpdateAppointment(BaseModel):
         if value.tzinfo is not None:
             return value.replace(tzinfo=None)
         return value
+
+class AppointmentUI(BaseModel):
+    id:int
+    client_name:str
+    client_phone:str
+    client_gender:str
+    client_points:float
+    service_price:float
+    service_name:str
+    place:str
+    status:str
+    date:datetime
+    final_sum:float
+    used_points: Optional[int] = None

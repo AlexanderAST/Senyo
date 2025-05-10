@@ -2,12 +2,11 @@ from api.database import get_db
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 from api.service.services_service import ServicesService
-from api.repository.services_repository import ServiceRepository
 from api.dto.services_dto import CreateService
 
 router = APIRouter()
 
-service_service = ServicesService(ServiceRepository())
+service_service = ServicesService()
 
 
 @router.post("/admin/service")

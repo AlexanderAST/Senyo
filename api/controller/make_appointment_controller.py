@@ -2,11 +2,10 @@ from api.database import get_db
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 from api.service.make_appointment_service import AppointmentService
-from api.repository.make_appointment_repository import AppointemntRepository
-from api.dto.make_appointment_dto import RequestAppointment, UpdateAppointment
+from api.dto.make_appointment_dto import RequestAppointment, UpdateAppointment, AppointmentUI
 
 router = APIRouter()
-appointment_service = AppointmentService(AppointemntRepository())
+appointment_service = AppointmentService()
 
 @router.post("/appointment")
 async def create_appointment(appointment_data:RequestAppointment, user_agent:str, db:AsyncSession = Depends(get_db)):
@@ -15,17 +14,17 @@ async def create_appointment(appointment_data:RequestAppointment, user_agent:str
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-@router.get("/appointment/{client_id}")
+@router.get("/appointment/{client_id}", response_model = list[AppointmentUI])
 async def get_appointment(client_id:int, db:AsyncSession = Depends(get_db)):
     try:
         return await appointment_service.get_appointment_client(db, client_id)
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-@router.get("/admin/appointment")
+@router.get("/admin/appointment", response_model = list[AppointmentUI])
 async def get_appointments(db:AsyncSession = Depends(get_db)):
     try:
-        return await appointment_service.get_appointments(db)
+        return await appointment_service.get_ui_appointments(db)
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
     

@@ -5,9 +5,6 @@ from api.repository.refferal_repository import ReferralsRepository
 
 
 class ReferralsService:
-    def __init__(self, referrals_repository:ReferralsRepository):
-        self.referrals_repository = referrals_repository
-        
     
     async def create_referral(self, db:AsyncSession, new_referrals_data:CreateReferralRequestDTO):
         
@@ -17,22 +14,30 @@ class ReferralsService:
             is_active=False
         )
         
-        return await self.referrals_repository.create_referral(db, referrals_data)
+        return await ReferralsRepository.create_referral(db, referrals_data)
     
     
-    async def get_referrals(self, db:AsyncSession, client_id:int):
-        referrals = await self.referrals_repository.get_referrals(db, client_id)
-        
+    async def get_referrals(self, db:AsyncSession, client_id:int) -> list[ReferralDTO]:
+        referrals = await ReferralsRepository.get_referrals(db, client_id)
+        result =[]
+        for a in referrals:
+            result.append(ReferralDTO(
+                id = a.id,
+                id_client = a.id_client,
+                refferal_phone = a.referral_phone,
+                is_active = a.is_active
+            ))
+
         if referrals is None:
             raise HTTPException(
                 status_code=404,
                 detail="Referrals not found"
             )
         
-        return referrals
+        return result
     
     async def update_referrals(self, db:AsyncSession, referrals_data:UpdateReferralDTO):
-        referral = await self.referrals_repository.update_referral(db, referrals_data)
+        referral = await ReferralsRepository.update_referral(db, referrals_data)
         
         if referral is None:
             raise HTTPException(status_code=404, detail="Referral not found")
@@ -40,12 +45,12 @@ class ReferralsService:
         return referral
     
     async def update_referrals_phone(self, db:AsyncSession, referrals_data:UpdateReferralDTO):
-        referral = await self.referrals_repository.update_referral(db, referrals_data)
+        referral = await ReferralsRepository.update_referral(db, referrals_data)
         
         return referral
         
     async def get_referrals_phone(self, db:AsyncSession, phone:str):
-        referrals = await self.referrals_repository.get_referrals_phone(db, phone)
+        referrals = await ReferralsRepository.get_referrals_phone(db, phone)
         
         if referrals is None:
             return None

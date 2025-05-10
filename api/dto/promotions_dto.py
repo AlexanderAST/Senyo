@@ -19,3 +19,12 @@ class PromotionsUpdate(BaseModel):
     id_gender:Optional[int] = None
     start_date:Optional[date] = None
     expiration_date:Optional[date] = None
+
+class PromotionsUI(BaseModel):
+    id: int
+    title:str
+    description:str
+    added_points:int
+    gender:str
+    start_date:date
+    expiration_date:date

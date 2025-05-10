@@ -4,7 +4,9 @@ from api.dto.promotions_dto import PromotionsCreate, PromotionsUpdate
 from api.domain.promotion_model import PromotionModel
 
 class PromotionsRepository:
-    async def create_promotions(self, db:AsyncSession, promotion_data:PromotionsCreate):
+
+    @classmethod
+    async def create_promotions(cls, db:AsyncSession, promotion_data:PromotionsCreate):
         new_promotion = PromotionModel(
             title = promotion_data.title,
             description = promotion_data.description,
@@ -19,7 +21,8 @@ class PromotionsRepository:
         await db.refresh(new_promotion)
         return new_promotion
     
-    async def delete_promotion(self, db:AsyncSession, id:int):
+    @classmethod
+    async def delete_promotion(cls, db:AsyncSession, id:int):
         promotion = await db.get(PromotionModel, id)
         
         if not promotion:
@@ -30,13 +33,15 @@ class PromotionsRepository:
         
         return id
 
-    async def get_promotions(self, db:AsyncSession):
+    @classmethod
+    async def get_promotions(cls, db:AsyncSession):
         query = select(PromotionModel)
         result = await db.execute(query)
         
         return result.scalars().all()
     
-    async def update_promptions(self, db:AsyncSession, promotion:PromotionsUpdate):
+    @classmethod
+    async def update_promptions(cls, db:AsyncSession, promotion:PromotionsUpdate):
         new_promotions = await db.get(PromotionModel, promotion.id)
         
         if not new_promotions:

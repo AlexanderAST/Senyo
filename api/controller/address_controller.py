@@ -2,11 +2,10 @@ from api.database import get_db
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 from api.service.address_service import AddressService
-from api.repository.address_repository import AddressesRepository
 from api.dto.address_dto import AddressCreateDTO, UpdateAddressDTO
 
 router = APIRouter()
-address_service = AddressService(AddressesRepository())
+address_service = AddressService()
 
 @router.post("/address")
 async def create_address(address:AddressCreateDTO, db:AsyncSession=Depends(get_db)):

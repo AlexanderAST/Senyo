@@ -2,12 +2,11 @@ from api.database import get_db
 from fastapi import APIRouter, HTTPException, Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 from api.service.place_type_service import PlaceTypeService
-from api.repository.place_type_repository import PlaceTypeRepository
 from api.dto.place_type_dto import CreatePlaceType
 
 router = APIRouter()
 
-place_type_service = PlaceTypeService(PlaceTypeRepository())
+place_type_service = PlaceTypeService()
 
 
 @router.post("/admin/place-type")
