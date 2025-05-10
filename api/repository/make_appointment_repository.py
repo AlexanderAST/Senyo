@@ -5,7 +5,9 @@ from api.dto.make_appointment_dto import CreateAppointment, UpdateAppointment
 
 
 class AppointemntRepository:
-    async def create_appointment(self, db:AsyncSession, appiontment:CreateAppointment):
+
+    @classmethod
+    async def create_appointment(cls, db:AsyncSession, appiontment:CreateAppointment):
         new_appointment = MakeAppointmentModel(
             id_client = appiontment.id_client,
             id_address = appiontment.id_address,
@@ -23,19 +25,22 @@ class AppointemntRepository:
         
         return new_appointment
     
-    async def get_appointment_client(self, db:AsyncSession, client_id:int):
+    @classmethod
+    async def get_appointment_client(cls, db:AsyncSession, client_id:int):
         query = select(MakeAppointmentModel).where(MakeAppointmentModel.id_client == client_id)
         result = await db.execute(query)
         
         return result.scalars().all()
     
-    async def get_appointments(self, db:AsyncSession):
+    @classmethod
+    async def get_appointments(cls, db:AsyncSession):
         query = select(MakeAppointmentModel)
         result = await db.execute(query)
         
         return result.scalars().all()
 
-    async def update_appointment(self, db:AsyncSession, appointment:UpdateAppointment):
+    @classmethod
+    async def update_appointment(cls, db:AsyncSession, appointment:UpdateAppointment):
         new_appointment = await db.get(MakeAppointmentModel, appointment.id)
         
         if not new_appointment:
