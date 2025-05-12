@@ -67,7 +67,8 @@ class ClientService:
             gender=gender.title if gender else None,
             permanent_points=balance.permanent_points if balance else 0.0,
             temporary_point=balance.temporary_points if balance else 0.0,
-            addresses=address_dtos
+            addresses=address_dtos,
+            telegram_id = client.telegram_id
         )
 
     async def get_clients(self, db: AsyncSession) -> list[ClientUI]:
@@ -96,7 +97,8 @@ class ClientService:
                 gender=gender.title if gender else None,
                 permanent_points=balance.permanent_points if balance else 0.0,
                 temporary_point=balance.temporary_points if balance else 0.0,
-                addresses=address_dtos
+                addresses=address_dtos,
+                telegram_id = client.telegram_id
             ))
 
         return result

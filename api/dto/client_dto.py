@@ -21,3 +21,4 @@ class ClientUI(BaseModel):
     permanent_points:float
     temporary_point:float
     addresses: list[AddressDTO]
+    telegram_id:int

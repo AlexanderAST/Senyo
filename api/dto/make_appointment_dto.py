@@ -1,10 +1,10 @@
-from pydantic import BaseModel, field_validator
+from pydantic import BaseModel, field_validator, model_validator
 from datetime import datetime
 from typing import Optional
 
 class CreateAppointment(BaseModel):
     id_client:int
-    id_address:int
+    id_address: Optional[int] = None
     date:datetime
     title:str
     id_status_type:int
@@ -21,13 +21,17 @@ class CreateAppointment(BaseModel):
 
 class RequestAppointment(BaseModel):
     id_client:int
-    id_address:int
+    id_address:Optional[int]= None
     date:datetime
     title:str
     final_sum:float
     id_services:int
     id_place_type:int
-
+    @model_validator(mode='after')
+    def validate_address(self) -> 'RequestAppointment':
+        if self.id_place_type == 2 and self.id_address is None:
+            raise ValueError("Поле 'id_address' обязательно при выборе визита 'на дому' (id_place_type = 2)")
+        return self
     
     
 

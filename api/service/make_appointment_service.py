@@ -1,3 +1,4 @@
+from api.repository.address_repository import AddressesRepository
 from api.repository.client_balance_repository import ClientBalanceRepository
 from api.repository.client_repository import ClientRepository
 from api.repository.gender_repository import GenderRepository
@@ -89,7 +90,12 @@ class AppointmentService:
             gender = await GenderRepository.get_gender_by_id(db, client.id_gender)
             place = await PlaceTypeRepository.get_place_type(db, a.id_place_type)
             balance = await ClientBalanceRepository.get_by_client_id(db, client.id)
+            place_title = place.title  # по умолчанию — офис
 
+            if a.id_place_type == 2 and a.id_address is not None:
+                 address = await AddressesRepository.get_by_id(db, a.id_address)
+                 if address:
+                     place_title = address.address
             result.append(AppointmentUI(
                 id=a.id,
                 client_name=f"{client.name} {client.surname}",
@@ -98,7 +104,7 @@ class AppointmentService:
                 client_points=balance.permanent_points+balance.temporary_points,
                 service_price=service.price,
                 service_name=service.title,
-                place=place.title,
+                place=place_title,
                 status=status.title,
                 date=a.date,
                 final_sum=a.final_sum,
