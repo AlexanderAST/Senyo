@@ -6,7 +6,6 @@ class CreateAppointment(BaseModel):
     id_client:int
     id_address: Optional[int] = None
     date:datetime
-    title:str
     id_status_type:int
     final_sum:float
     id_services:int
@@ -23,7 +22,6 @@ class RequestAppointment(BaseModel):
     id_client:int
     id_address:Optional[int]= None
     date:datetime
-    title:str
     final_sum:float
     id_services:int
     id_place_type:int
@@ -40,7 +38,6 @@ class UpdateAppointment(BaseModel):
     id_client:Optional[int]= None
     id_address:Optional[int] = None
     date:Optional[datetime] = None
-    title:Optional[str] = None
     id_status_type:Optional[int] = None
     final_sum:Optional[float] = None
     id_services:Optional[int] = None

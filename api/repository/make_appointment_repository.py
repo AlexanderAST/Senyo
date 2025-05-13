@@ -12,7 +12,6 @@ class AppointemntRepository:
             id_client = appiontment.id_client,
             id_address = appiontment.id_address,
             date = appiontment.date,
-            title = appiontment.title,
             id_status_type = appiontment.id_status_type,
             final_sum = appiontment.final_sum,
             id_services = appiontment.id_services,

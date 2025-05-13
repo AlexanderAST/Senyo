@@ -8,3 +8,7 @@ class ServicesService:
     
     async def create_service(self, db:AsyncSession, service = CreateService):
         return await ServiceRepository.create_service(db, service)
+    
+
+    async def get_services(self, db:AsyncSession,):
+        return await ServiceRepository.get_all_services(db)

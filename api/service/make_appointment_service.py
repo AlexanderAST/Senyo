@@ -17,7 +17,6 @@ class AppointmentService:
             id_client = appointment_data.id_client,
             id_address = appointment_data.id_address,
             date = appointment_data.date,
-            title = appointment_data.title,
             id_status_type = 2 if user_agent == "Admin" else 1,
             final_sum = appointment_data.final_sum,
             id_services = appointment_data.id_services,
@@ -81,6 +80,7 @@ class AppointmentService:
     
     async def get_ui_appointments(self, db:AsyncSession) -> list[AppointmentUI]:
         appointments = await AppointemntRepository.get_appointments(db)
+        appointments = [a for a in appointments if a.id_status_type in (1, 2)]
         result =[]
 
         for a in appointments:
@@ -111,4 +111,41 @@ class AppointmentService:
                 used_points=service.price - a.final_sum
             ))
 
+        return result
+    
+    async def get_ui_archived_appointments(self, db: AsyncSession) -> list[AppointmentUI]:
+        appointments = await AppointemntRepository.get_appointments(db)
+
+        appointments = [a for a in appointments if a.id_status_type in (3, 4)]
+
+        result = []
+        for a in appointments:
+            client = await ClientRepository.get_client(db, a.id_client)
+            service = await ServiceRepository.get_service(db, a.id_services)
+            status = await StatusTypeRepository.get_status_by_id(db, a.id_status_type)
+            gender = await GenderRepository.get_gender_by_id(db, client.id_gender)
+            place = await PlaceTypeRepository.get_place_type(db, a.id_place_type)
+            balance = await ClientBalanceRepository.get_by_client_id(db, client.id)
+
+            place_title = place.title
+            if a.id_place_type == 2 and a.id_address is not None:
+                address = await AddressesRepository.get_by_id(db, a.id_address)
+                if address:
+                    place_title = address.address
+
+            result.append(AppointmentUI(
+                id=a.id,
+                client_name=f"{client.name} {client.surname}",
+                client_phone=client.phone,
+                client_gender=gender.title,
+                client_points=balance.permanent_points + balance.temporary_points,
+                service_price=service.price,
+                service_name=service.title,
+                place=place_title,
+                status=status.title,
+                date=a.date,
+                final_sum=a.final_sum,
+                used_points=service.price - a.final_sum
+            ))
+    
         return result

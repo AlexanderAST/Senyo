@@ -36,3 +36,10 @@ async def update_appointments(appointment:UpdateAppointment, db:AsyncSession=Dep
         return {"status":"updated success"}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+    
+@router.get("/admin/appointment/archive", response_model=list[AppointmentUI])
+async def get_archived_appointments(db: AsyncSession = Depends(get_db)):
+    try:
+        return await appointment_service.get_ui_archived_appointments(db)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
