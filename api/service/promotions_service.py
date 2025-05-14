@@ -19,7 +19,7 @@ class PromotionsService:
         result =[]
 
         for a in promotions:
-            gender = await GenderRepository.get_gender_by_id(db, a.gender)
+            gender = await GenderRepository.get_gender_by_id(db, a.id_gender)
             
             result.append(PromotionsUI(
                 id = a.id,
