@@ -56,7 +56,6 @@ class ClientService:
             id=a.id,
             address=a.address,
             id_client=a.id_client,
-            status=a.status
         ) for a in addresses]
 
         return ClientUI(
@@ -102,3 +101,22 @@ class ClientService:
             ))
 
         return result
+    
+    async def add_points_to_client(
+        self,
+        db: AsyncSession,
+        client_id: int,
+        permanent_delta: float = 0.0,
+        temporary_delta: float = 0.0
+    ):
+        updated_balance = await ClientBalanceRepository.update_balance(
+            db=db,
+            client_id=client_id,
+            permanent_delta=permanent_delta,
+            temporary_delta=temporary_delta
+        )
+
+        if not updated_balance:
+            raise HTTPException(status_code=404, detail="Client balance not found")
+
+        return updated_balance

@@ -1,5 +1,6 @@
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy import update
 from api.domain.make_appointment_model import MakeAppointmentModel
 from api.dto.make_appointment_dto import CreateAppointment, UpdateAppointment
 
@@ -57,3 +58,12 @@ class AppointemntRepository:
         
         return new_appointment
         
+    @classmethod
+    async def nullify_address_references(cls, db: AsyncSession, address_id: int):
+        stmt = (
+            update(MakeAppointmentModel)
+            .where(MakeAppointmentModel.id_address == address_id)
+            .values(id_address=None)
+        )
+        await db.execute(stmt)
+        await db.commit()

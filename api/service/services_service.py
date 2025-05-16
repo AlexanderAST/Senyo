@@ -12,3 +12,8 @@ class ServicesService:
 
     async def get_services(self, db:AsyncSession,):
         return await ServiceRepository.get_all_services(db)
+    
+    async def delete_service(self, db:AsyncSession, id:int):
+        id = await ServiceRepository.delete_service(db, id)
+        return {"status":"success", "id":id}
+    

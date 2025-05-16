@@ -22,3 +22,10 @@ async def get_services(db:AsyncSession= Depends(get_db)):
         return await service_service.get_services(db)
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+@router.delete("/admin/service")
+async def delete_promotion(id:int, db:AsyncSession= Depends(get_db)):
+    try:
+        return await service_service.delete_service(db, id)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
