@@ -69,7 +69,34 @@ class ClientService:
             addresses=address_dtos,
             telegram_id = client.telegram_id
         )
+    
+    async def get_by_telegram_id(self, db: AsyncSession, telegram_id: int) -> ClientUI:
+        client = await ClientRepository.get_by_telegram_id(db, telegram_id)
+        if client is None:
+            raise HTTPException(status_code=404, detail="Client not found")
 
+        balance = await ClientBalanceRepository.get_by_client_id(db, client.id)
+        addresses = await AddressesRepository.get_by_client_id(db, client.id)
+        gender = await GenderRepository.get_gender_by_id(db, client.id_gender)
+
+        address_dtos = [AddressDTO(
+            id=a.id,
+            address=a.address,
+            id_client=a.id_client,
+        ) for a in addresses]
+
+        return ClientUI(
+            id=client.id,
+            surname=client.surname,
+            name=client.name,
+            phone=client.phone,
+            gender=gender.title if gender else None,
+            permanent_points=balance.permanent_points if balance else 0.0,
+            temporary_point=balance.temporary_points if balance else 0.0,
+            addresses=address_dtos,
+            telegram_id=client.telegram_id
+        )
+    
     async def get_clients(self, db: AsyncSession) -> list[ClientUI]:
         clients = await ClientRepository.get_clients(db)
         if not clients:

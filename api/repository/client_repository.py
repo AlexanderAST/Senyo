@@ -46,3 +46,10 @@ class ClientRepository:
         result = await db.execute(query)
         
         return result.scalars().all()
+    
+    @classmethod
+    async def get_by_telegram_id(cls,db:AsyncSession, telegram_id:int):
+        query = select(ClientModel).where(ClientModel.telegram_id==telegram_id)
+        result = await db.execute(query)
+
+        return result.scalars().first()

@@ -12,7 +12,7 @@ async def sing_up(client:ClientCreateDTO, db:AsyncSession = Depends(get_db)):
     try:
         return await client_service.create_client(db, client)
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=404, detail=str(e))
     
 
 @router.put("/client")
@@ -30,6 +30,14 @@ async def info(client_id:int, db:AsyncSession = Depends(get_db)):
         return await client_service.get_info(db, client_id) 
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+@router.get("/client/telegram/{telegram_id}", response_model=ClientUI)
+async def get_client_by_telegram_id(telegram_id: int, db: AsyncSession = Depends(get_db)):
+    try:
+        return await client_service.get_by_telegram_id(db, telegram_id)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
     
 
 @router.get("/admin/get-clients", response_model = list[ClientUI])
