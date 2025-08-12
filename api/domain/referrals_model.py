@@ -9,5 +9,5 @@ class ReferralsModel(Base):
     id = Column(Integer, primary_key=True, index=True)
     id_client = Column(Integer, ForeignKey(ClientModel.id))
     client = relationship(ClientModel, foreign_keys=[id_client])
-    referral_phone = Column(String)
+    referral_phone = Column(String,unique=True)
     is_active = Column(Boolean)
