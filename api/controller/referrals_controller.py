@@ -9,7 +9,7 @@ referrals_service = ReferralsService()
 
 
 @router.post("/referrals")
-async def create_referrals(referrals:CreateReferralRequestDTO, db:AsyncSession=Depends(get_db)):  
+async def create_referrals(referrals:CreateReferralRequestDTO, db:AsyncSession=Depends(get_db),response_model=ReferralDTO):  
     try:
        
         return await referrals_service.create_referral(db, referrals)

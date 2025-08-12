@@ -6,7 +6,7 @@ class CreateReferralRequestDTO(BaseModel):
     refferal_phone:str
 
 class ReferralDTO(BaseModel):
-    id:int
+    id: Optional[int] = None
     id_client:int
     refferal_phone:str
     is_active:bool
