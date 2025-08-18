@@ -43,3 +43,10 @@ async def get_archived_appointments(db: AsyncSession = Depends(get_db)):
         return await appointment_service.get_ui_archived_appointments(db)
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+@router.put("/appointment/cancel/{appointment_id}")
+async def cancel_client_appointment(appointment_id: int, db: AsyncSession = Depends(get_db)):
+    try:
+        return await appointment_service.cancel_appointment(db, appointment_id)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))

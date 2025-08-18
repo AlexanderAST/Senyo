@@ -1,3 +1,4 @@
+from api.domain.make_appointment_model import MakeAppointmentModel
 from api.repository.address_repository import AddressesRepository
 from api.repository.client_balance_repository import ClientBalanceRepository
 from api.repository.client_repository import ClientRepository
@@ -9,8 +10,31 @@ from fastapi import HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 from api.repository.make_appointment_repository import AppointemntRepository
 from api.dto.make_appointment_dto import CreateAppointment, RequestAppointment, UpdateAppointment, AppointmentUI
+from sqlalchemy import select
 
 class AppointmentService:
+
+    async def cancel_appointment(self, db: AsyncSession, appointment_id: int):
+        # Находим запись по ID (без проверки на клиента)
+        query = select(MakeAppointmentModel).where(MakeAppointmentModel.id == appointment_id)
+        result = await db.execute(query)
+        appointment = result.scalar_one_or_none()
+        
+        if not appointment:
+            raise HTTPException(status_code=404, detail="Appointment not found")
+        
+        # Только если активная (статус 1 или 2), иначе ошибка
+        if appointment.id_status_type not in (1, 2):
+            raise HTTPException(status_code=400, detail="Only active appointments can be cancelled")
+        
+        # Меняем статус на 4 (отменена)
+        update_data = UpdateAppointment(id=appointment_id, id_status_type=4)
+        updated_appointment = await AppointemntRepository.update_appointment(db, update_data)
+        
+        if not updated_appointment:
+            raise HTTPException(status_code=500, detail="Failed to update appointment")
+        
+        return updated_appointment
     
     async def create_appointment(self, db:AsyncSession, appointment_data:RequestAppointment,user_agent:str):
         new_appointment = CreateAppointment(
@@ -149,3 +173,5 @@ class AppointmentService:
             ))
     
         return result
+    
+    
