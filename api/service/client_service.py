@@ -1,8 +1,8 @@
+from http.client import HTTPException
 from api.dto.address_dto import AddressDTO
 from api.repository.address_repository import AddressesRepository
 from api.repository.client_balance_repository import ClientBalanceRepository
 from api.repository.gender_repository import GenderRepository
-from fastapi import HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 from api.repository.client_repository import ClientRepository
 from api.dto.client_dto import ClientCreateDTO, ClientUI, ClientUpdateDTO
@@ -72,8 +72,6 @@ class ClientService:
     
     async def get_by_telegram_id(self, db: AsyncSession, telegram_id: int) -> ClientUI:
         client = await ClientRepository.get_by_telegram_id(db, telegram_id)
-        if client is None:
-            raise HTTPException(status_code=404, detail="Client not found")
 
         balance = await ClientBalanceRepository.get_by_client_id(db, client.id)
         addresses = await AddressesRepository.get_by_client_id(db, client.id)
@@ -99,8 +97,6 @@ class ClientService:
     
     async def get_clients(self, db: AsyncSession) -> list[ClientUI]:
         clients = await ClientRepository.get_clients(db)
-        if not clients:
-            raise HTTPException(status_code=404, detail="Clients not found")
 
         result = []
 
@@ -142,8 +138,5 @@ class ClientService:
             permanent_delta=permanent_delta,
             temporary_delta=temporary_delta
         )
-
-        if not updated_balance:
-            raise HTTPException(status_code=404, detail="Client balance not found")
 
         return updated_balance

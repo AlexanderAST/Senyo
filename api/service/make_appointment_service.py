@@ -1,3 +1,4 @@
+from http.client import HTTPException
 from api.domain.make_appointment_model import MakeAppointmentModel
 from api.repository.address_repository import AddressesRepository
 from api.repository.client_balance_repository import ClientBalanceRepository
@@ -6,7 +7,7 @@ from api.repository.gender_repository import GenderRepository
 from api.repository.place_type_repository import PlaceTypeRepository
 from api.repository.services_repository import ServiceRepository
 from api.repository.status_repository import StatusTypeRepository
-from fastapi import HTTPException
+from datetime import datetime
 from sqlalchemy.ext.asyncio import AsyncSession
 from api.repository.make_appointment_repository import AppointemntRepository
 from api.dto.make_appointment_dto import CreateAppointment, RequestAppointment, UpdateAppointment, AppointmentUI
@@ -51,13 +52,8 @@ class AppointmentService:
 
     async def get_appointment_client(self, db:AsyncSession, client_id:int):
         appointments = await AppointemntRepository.get_appointment_client(db, client_id)
-        if not appointments:
-            raise HTTPException(status_code=404, detail="Appointment not found")
 
         client = await ClientRepository.get_client(db, client_id)
-        if not client:
-            raise HTTPException(status_code=404, detail="Client not found")
-
         gender = await GenderRepository.get_gender_by_id(db, client.id_gender)
         balance = await ClientBalanceRepository.get_by_client_id(db, client.id)
 
@@ -82,16 +78,12 @@ class AppointmentService:
                 final_sum=a.final_sum,
                 used_points=service.price - a.final_sum
             ))
-
+        now = datetime.now()
+        result = sorted(result, key=lambda x: abs(x.date - now))
         return result
     
     async def get_appointments(self, db:AsyncSession):
         appointments = await AppointemntRepository.get_appointments(db)
-        if appointments is None:
-            raise HTTPException(
-                status_code=404,
-                detail="Appointment not found"
-            )
         
         return appointments
 
@@ -134,7 +126,8 @@ class AppointmentService:
                 final_sum=a.final_sum,
                 used_points=service.price - a.final_sum
             ))
-
+        now = datetime.now()
+        result = sorted(result, key=lambda x: abs(x.date - now))
         return result
     
     async def get_ui_archived_appointments(self, db: AsyncSession) -> list[AppointmentUI]:
@@ -171,7 +164,8 @@ class AppointmentService:
                 final_sum=a.final_sum,
                 used_points=service.price - a.final_sum
             ))
-    
+        now = datetime.now()
+        result = sorted(result, key=lambda x: abs(x.date - now))
         return result
     
     

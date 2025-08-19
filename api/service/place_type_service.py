@@ -1,4 +1,3 @@
-from fastapi import HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 from api.dto.place_type_dto import CreatePlaceType,PlaceTypeResponse
 from api.repository.place_type_repository import PlaceTypeRepository  

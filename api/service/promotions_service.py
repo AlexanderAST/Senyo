@@ -1,5 +1,5 @@
 from api.repository.gender_repository import GenderRepository
-from fastapi import HTTPException
+from datetime import date
 from sqlalchemy.ext.asyncio import AsyncSession
 from api.dto.promotions_dto import PromotionsCreate, PromotionsUI
 from api.repository.promotions_repository import PromotionsRepository, PromotionsUpdate
@@ -30,19 +30,12 @@ class PromotionsService:
                 start_date = a.start_date,
                 expiration_date = a.expiration_date,
             ))
-        if promotions is None:
-            raise HTTPException(
-                status_code=404,
-                detail="Clients not found"
-            )
         
-        
+        today = date.today()
+        result = sorted(result, key=lambda x: abs(x.start_date - today))
         return result
 
     async def update_promotions(self, db:AsyncSession, promotion:PromotionsUpdate):
         new_promotion = await PromotionsRepository.update_promptions(db, promotion)
-        
-        if new_promotion is None:
-            raise HTTPException(status_code=404,detail="Promotion not found")
         
         return new_promotion
