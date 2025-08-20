@@ -63,7 +63,7 @@ class ReferralsService:
                     id_point_type=point_type.id,
                     points=500,
                     id_direction=direction.id,
-                    id_type_accrual=accrual_type.id,
+                    id_type_accural=accrual_type.id,
                     expiration_date=None
                 )
                 await point_logs_service.create_log(db, log_dto)

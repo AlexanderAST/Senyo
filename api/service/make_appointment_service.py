@@ -73,7 +73,7 @@ class AppointmentService:
                     id_point_type=point_type.id,
                     points=temp_deduct,
                     id_direction=direction.id,
-                    id_type_accrual=accrual_type.id,
+                    id_type_accural=accrual_type.id,
                     expiration_date=None
                 )
                 await point_logs_service.create_log(db, log_dto)
@@ -85,7 +85,7 @@ class AppointmentService:
                     id_point_type=point_type.id,
                     points=perm_deduct,
                     id_direction=direction.id,
-                    id_type_accrual=accrual_type.id,
+                    id_type_accural=accrual_type.id,
                     expiration_date=None
                 )
                 await point_logs_service.create_log(db, log_dto)
@@ -130,7 +130,7 @@ class AppointmentService:
             id_point_type=point_type.id,
             points=points_to_add,
             id_direction=direction.id,
-            id_type_accrual=accrual_type.id,
+            id_type_accural=accrual_type.id,
             expiration_date=None
         )
         await point_logs_service.create_log(db, log_dto)
@@ -156,7 +156,7 @@ class AppointmentService:
                     id_point_type=point_type.id,
                     points=500,
                     id_direction=direction.id,
-                    id_type_accrual=accrual_type_ref.id,
+                    id_type_accural=accrual_type_ref.id,
                     expiration_date=None
                 )
                 await point_logs_service.create_log(db, log_dto_inv)
@@ -195,7 +195,7 @@ class AppointmentService:
                 id_point_type=point_type.id,
                 points=used_points,
                 id_direction=direction.id,
-                id_type_accrual=accrual_type.id,
+                id_type_accural=accrual_type.id,
                 expiration_date=None
             )
             await point_logs_service.create_log(db, log_dto)

@@ -57,7 +57,7 @@ class ClientService:
                     id_point_type=point_type.id,
                     points=500.0,
                     id_direction=direction.id,
-                    id_type_accrual=accrual_type.id,
+                    id_type_accural=accrual_type.id,
                     expiration_date=None
                 )
                 await point_logs_service.create_log(db, log_dto)
@@ -173,7 +173,7 @@ class ClientService:
                 id_point_type=point_type.id,
                 points=abs(permanent_delta),
                 id_direction=direction.id,
-                id_type_accrual=accrual_type.id,
+                id_type_accural=accrual_type.id,
                 expiration_date=None  # Для permanent нет expiration
             )
             await point_logs_service.create_log(db, log_dto)
@@ -188,7 +188,7 @@ class ClientService:
                 id_point_type=point_type.id,
                 points=abs(temporary_delta),
                 id_direction=direction.id,
-                id_type_accrual=accrual_type.id,
+                id_type_accural=accrual_type.id,
                 expiration_date=None  # Укажи, если есть логика для expiration
             )
             await point_logs_service.create_log(db, log_dto)

@@ -72,7 +72,7 @@ class PromotionsService:
                     id_point_type=point_type.id,
                     points=promo.added_points,
                     id_direction=direction.id,
-                    id_type_accrual=accrual_type.id,
+                    id_type_accural=accrual_type.id,
                     expiration_date=promo.expiration_date
                 )
                 await point_logs_service.create_log(db, log_dto)
@@ -93,7 +93,7 @@ class PromotionsService:
                     id_point_type=point_type.id,
                     points=to_deduct,
                     id_direction=direction_ded.id,
-                    id_type_accrual=accrual_type.id,
+                    id_type_accural=accrual_type.id,
                     expiration_date=promo.expiration_date
                 )
                 await point_logs_service.create_log(db, log_dto)    
