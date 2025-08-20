@@ -1,3 +1,4 @@
+from datetime import date
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from api.dto.promotions_dto import PromotionsCreate, PromotionsUpdate
@@ -58,3 +59,14 @@ class PromotionsRepository:
         await db.refresh(new_promotions)
         
         return new_promotions
+    @classmethod
+    async def get_by_start_date(cls, db: AsyncSession, start_date: date) -> list[PromotionModel]:
+        query = select(PromotionModel).where(PromotionModel.start_date == start_date)
+        result = await db.execute(query)
+        return result.scalars().all()
+
+    @classmethod
+    async def get_by_expiration_date(cls, db: AsyncSession, expiration_date: date) -> list[PromotionModel]:
+        query = select(PromotionModel).where(PromotionModel.expiration_date == expiration_date)
+        result = await db.execute(query)
+        return result.scalars().all()

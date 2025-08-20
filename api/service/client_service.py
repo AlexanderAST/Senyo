@@ -10,9 +10,14 @@ from api.dto.referral_dto import UpdateReferralDTO
 from api.service.referrals_service import ReferralsService
 from api.repository.refferal_repository import ReferralsRepository
 from api.dto.referral_dto import UpdateReferralDTO
+from api.repository.point_type_repository import PointTypeRepository
+from api.repository.direction_repository import DirectionRepository
+from api.repository.type_accrual_repository import TypeAccrualRepository
+from api.service.point_logs_service import PointLogsService
+from api.dto.point_logs_dto import PointLogsCreateDTO
 
 referrals_service = ReferralsService()
-
+point_logs_service = PointLogsService()
 class ClientService:
             
     async def create_client(self, db: AsyncSession, client_data: ClientCreateDTO):
@@ -39,6 +44,23 @@ class ClientService:
             if referrals is not None:
                 referral_data = UpdateReferralDTO(id=referrals, is_active=True)
                 await referrals_service.update_referrals_phone(db,referral_data)
+                
+                # Начислить 500 permanent рефералу (новому клиенту)
+                await ClientBalanceRepository.update_balance(db, client.id, permanent_delta=500.0)
+                
+                # Лог для начисления
+                accrual_type = await TypeAccrualRepository.get_by_title(db, 'referral')
+                direction = await DirectionRepository.get_by_title(db, 'accrual')
+                point_type = await PointTypeRepository.get_by_title(db, 'permanent')
+                log_dto = PointLogsCreateDTO(
+                    id_client=client.id,
+                    id_point_type=point_type.id,
+                    points=500.0,
+                    id_direction=direction.id,
+                    id_type_accrual=accrual_type.id,
+                    expiration_date=None
+                )
+                await point_logs_service.create_log(db, log_dto)
                 
         
         return client
@@ -138,5 +160,37 @@ class ClientService:
             permanent_delta=permanent_delta,
             temporary_delta=temporary_delta
         )
+
+        accrual_type = await TypeAccrualRepository.get_by_title(db, 'manual')
+
+        # Лог для permanent
+        if permanent_delta != 0:
+            direction_title = 'accrual' if permanent_delta > 0 else 'deduction'
+            direction = await DirectionRepository.get_by_title(db, direction_title)
+            point_type = await PointTypeRepository.get_by_title(db, 'permanent')
+            log_dto = PointLogsCreateDTO(
+                id_client=client_id,
+                id_point_type=point_type.id,
+                points=abs(permanent_delta),
+                id_direction=direction.id,
+                id_type_accrual=accrual_type.id,
+                expiration_date=None  # Для permanent нет expiration
+            )
+            await point_logs_service.create_log(db, log_dto)
+
+        # Лог для temporary
+        if temporary_delta != 0:
+            direction_title = 'accrual' if temporary_delta > 0 else 'deduction'
+            direction = await DirectionRepository.get_by_title(db, direction_title)
+            point_type = await PointTypeRepository.get_by_title(db, 'temporary')
+            log_dto = PointLogsCreateDTO(
+                id_client=client_id,
+                id_point_type=point_type.id,
+                points=abs(temporary_delta),
+                id_direction=direction.id,
+                id_type_accrual=accrual_type.id,
+                expiration_date=None  # Укажи, если есть логика для expiration
+            )
+            await point_logs_service.create_log(db, log_dto)
 
         return updated_balance

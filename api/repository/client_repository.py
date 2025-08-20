@@ -53,3 +53,15 @@ class ClientRepository:
         result = await db.execute(query)
 
         return result.scalars().first()
+    
+    @classmethod
+    async def get_by_phone(cls, db: AsyncSession, phone: str) -> ClientModel | None:
+        query = select(ClientModel).where(ClientModel.phone == phone)
+        result = await db.execute(query)
+        return result.scalars().first()
+
+    @classmethod
+    async def get_clients_by_gender(cls, db: AsyncSession, gender_id: int) -> list[ClientModel]:
+        query = select(ClientModel).where(ClientModel.id_gender == gender_id)
+        result = await db.execute(query)
+        return result.scalars().all()

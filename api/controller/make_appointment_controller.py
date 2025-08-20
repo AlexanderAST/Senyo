@@ -50,3 +50,10 @@ async def cancel_client_appointment(appointment_id: int, db: AsyncSession = Depe
         return await appointment_service.cancel_appointment(db, appointment_id)
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+@router.put("/admin/appointment/close/{appointment_id}")
+async def close_appointment(appointment_id: int, db: AsyncSession = Depends(get_db)):
+    try:
+        return await appointment_service.close_appointment(db, appointment_id)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
