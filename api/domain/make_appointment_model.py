@@ -23,4 +23,3 @@ class MakeAppointmentModel(Base):
     service = relationship(ServicesModel, foreign_keys=[id_services])
     id_place_type = Column(Integer, ForeignKey(PlaceTypeModel.id))
     place_type = relationship(PlaceTypeModel, foreign_keys=[id_place_type])
-    used_points = Column(Float, default=0.0)

@@ -17,9 +17,8 @@ class AppointemntRepository:
             final_sum = appiontment.final_sum,
             id_services = appiontment.id_services,
             id_place_type = appiontment.id_place_type
-            
         )
-        used_points = new_appointment.used_points
+        
         db.add(new_appointment)
         await db.commit()
         await db.refresh(new_appointment)

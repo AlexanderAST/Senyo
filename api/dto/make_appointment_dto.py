@@ -3,7 +3,6 @@ from datetime import datetime
 from typing import Optional
 
 class CreateAppointment(BaseModel):
-    used_points: float = 0.0
     id_client:int
     id_address: Optional[int] = None
     date:datetime
@@ -20,7 +19,6 @@ class CreateAppointment(BaseModel):
 
 
 class RequestAppointment(BaseModel):
-    used_points: float = 0.0
     id_client:int
     id_address:Optional[int]= None
     date:datetime

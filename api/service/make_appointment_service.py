@@ -26,119 +26,69 @@ point_logs_service = PointLogsService()
 
 class AppointmentService:
 
-    async def cancel_appointment(self, db: AsyncSession, appointment_id: int):
-        # Находим запись по ID (без проверки на клиента)
-        query = select(MakeAppointmentModel).where(MakeAppointmentModel.id == appointment_id)
-        result = await db.execute(query)
-        appointment = result.scalar_one_or_none()
-        
-        if not appointment:
-            raise HTTPException(status_code=404, detail="Appointment not found")
-        
-        # Только если активная (статус 1 или 2), иначе ошибка
-        if appointment.id_status_type not in (1, 2):
-            raise HTTPException(status_code=400, detail="Only active appointments can be cancelled")
-        appointment = result.scalar_one_or_none()  # После find
-
-        used_points = appointment.used_points
-        if used_points > 0:
-            # Предполагаем, что в модели есть used_permanent и used_temporary (добавь их вместо or in addition to used_points)
-            # Для примера: если нет, то для простоты возвращаем все как permanent (но лучше добавить поля)
-            # Здесь предполагаем used_permanent в модели
-            used_permanent = appointment.used_permanent  # Добавь Column в модель
-
-            await ClientBalanceRepository.update_balance(db, appointment.id_client, permanent_delta=used_permanent)
-
-            # Лог для возврата
-            accrual_type = await TypeAccrualRepository.get_by_title(db, 'cancel')  # Или 'appointment'
-            direction = await DirectionRepository.get_by_title(db, 'accrual')
-            point_type = await PointTypeRepository.get_by_title(db, 'permanent')
-            log_dto = PointLogsCreateDTO(
-                id_client=appointment.id_client,
-                id_point_type=point_type.id,
-                points=used_permanent,
-                id_direction=direction.id,
-                id_type_accrual=accrual_type.id,
-                expiration_date=None
-            )
-            await point_logs_service.create_log(db, log_dto)
-
-        # Меняем статус на 4 (отменена)
-        update_data = UpdateAppointment(id=appointment_id, id_status_type=4)
-        updated_appointment = await AppointemntRepository.update_appointment(db, update_data)
-        
-        if not updated_appointment:
-            raise HTTPException(status_code=500, detail="Failed to update appointment")
-        
-        return updated_appointment
-    
-    async def create_appointment(self, db:AsyncSession, appointment_data:RequestAppointment,user_agent:str):
-        # Получить service для price
+    async def create_appointment(self, db:AsyncSession, appointment_data:RequestAppointment, user_agent:str):
         service = await ServiceRepository.get_service(db, appointment_data.id_services)
         if not service:
             raise HTTPException(status_code=404, detail="Service not found")
 
-        used_points = appointment_data.used_points  # Новое поле в DTO
-        if used_points > service.price:
-            raise HTTPException(status_code=400, detail="Used points exceed service price")
+        final_sum = appointment_data.final_sum
+        if final_sum > service.price:
+            raise HTTPException(status_code=400, detail="Final sum exceeds service price")
 
-        # Проверить доступные баллы (total - sum used in active appointments)
-        balance = await ClientBalanceRepository.get_by_client_id(db, appointment_data.id_client)
-        if not balance:
-            raise HTTPException(status_code=404, detail="Balance not found")
+        used_points = service.price - final_sum  # Рассчитываем на лету
 
-        active_used_sum_query = select(func.sum(MakeAppointmentModel.used_points)).where(
-            and_(
-                MakeAppointmentModel.id_client == appointment_data.id_client,
-                MakeAppointmentModel.id_status_type.in_([1, 2])  # Активные
+        if used_points > 0:
+            balance = await ClientBalanceRepository.get_by_client_id(db, appointment_data.id_client)
+            if not balance:
+                raise HTTPException(status_code=404, detail="Balance not found")
+
+            # Сумма used_points в активных appointments (рассчитываем на лету)
+            active_appointments = await AppointemntRepository.get_appointment_client(db, appointment_data.id_client)
+            active_used_sum = 0.0
+            for appt in [a for a in active_appointments if a.id_status_type in (1, 2)]:
+                appt_service = await ServiceRepository.get_service(db, appt.id_services)
+                active_used_sum += appt_service.price - appt.final_sum
+
+            available_points = balance.permanent_points + balance.temporary_points - active_used_sum
+
+            if used_points > available_points:
+                raise HTTPException(status_code=400, detail="Not enough available points")
+
+            # Списание с приоритетом temporary
+            deduction = used_points
+            temp_deduct = min(deduction, balance.temporary_points)
+            perm_deduct = deduction - temp_deduct
+
+            await ClientBalanceRepository.update_balance(
+                db, appointment_data.id_client, permanent_delta=-perm_deduct, temporary_delta=-temp_deduct
             )
-        )
-        active_used_sum = (await db.execute(active_used_sum_query)).scalar() or 0.0
-        available_points = balance.permanent_points + balance.temporary_points - active_used_sum
 
-        if used_points > available_points:
-            raise HTTPException(status_code=400, detail="Not enough available points")
+            accrual_type = await TypeAccrualRepository.get_by_title(db, 'appointment')
+            direction = await DirectionRepository.get_by_title(db, 'deduction')
 
-        # Рассчитать дельты для списания (приоритет temporary)
-        deduction = used_points
-        temp_deduct = min(deduction, balance.temporary_points)
-        perm_deduct = deduction - temp_deduct
+            if temp_deduct > 0:
+                point_type = await PointTypeRepository.get_by_title(db, 'temporary')
+                log_dto = PointLogsCreateDTO(
+                    id_client=appointment_data.id_client,
+                    id_point_type=point_type.id,
+                    points=temp_deduct,
+                    id_direction=direction.id,
+                    id_type_accrual=accrual_type.id,
+                    expiration_date=None
+                )
+                await point_logs_service.create_log(db, log_dto)
 
-        # Списать
-        await ClientBalanceRepository.update_balance(
-            db, appointment_data.id_client, permanent_delta=-perm_deduct, temporary_delta=-temp_deduct
-        )
-
-        # Логи для списания
-        accrual_type = await TypeAccrualRepository.get_by_title(db, 'appointment')
-        direction = await DirectionRepository.get_by_title(db, 'deduction')
-
-        if temp_deduct > 0:
-            point_type = await PointTypeRepository.get_by_title(db, 'temporary')
-            log_dto = PointLogsCreateDTO(
-                id_client=appointment_data.id_client,
-                id_point_type=point_type.id,
-                points=temp_deduct,
-                id_direction=direction.id,
-                id_type_accrual=accrual_type.id,
-                expiration_date=None  # Для appointment нет expiration
-            )
-            await point_logs_service.create_log(db, log_dto)
-
-        if perm_deduct > 0:
-            point_type = await PointTypeRepository.get_by_title(db, 'permanent')
-            log_dto = PointLogsCreateDTO(
-                id_client=appointment_data.id_client,
-                id_point_type=point_type.id,
-                points=perm_deduct,
-                id_direction=direction.id,
-                id_type_accrual=accrual_type.id,
-                expiration_date=None
-            )
-            await point_logs_service.create_log(db, log_dto)
-
-        # Рассчитать final_sum
-        final_sum = service.price - used_points
+            if perm_deduct > 0:
+                point_type = await PointTypeRepository.get_by_title(db, 'permanent')
+                log_dto = PointLogsCreateDTO(
+                    id_client=appointment_data.id_client,
+                    id_point_type=point_type.id,
+                    points=perm_deduct,
+                    id_direction=direction.id,
+                    id_type_accrual=accrual_type.id,
+                    expiration_date=None
+                )
+                await point_logs_service.create_log(db, log_dto)
 
         new_appointment = CreateAppointment(
             id_client=appointment_data.id_client,
@@ -147,11 +97,110 @@ class AppointmentService:
             id_status_type=2 if user_agent == "Admin" else 1,
             final_sum=final_sum,
             id_services=appointment_data.id_services,
-            id_place_type=appointment_data.id_place_type,
-            used_points=used_points  # Новое поле
+            id_place_type=appointment_data.id_place_type
         )
         
         return await AppointemntRepository.create_appointment(db, new_appointment)
+
+    async def close_appointment(self, db: AsyncSession, appointment_id: int):
+        query = select(MakeAppointmentModel).where(MakeAppointmentModel.id == appointment_id)
+        result = await db.execute(query)
+        appointment = result.scalar_one_or_none()
+        
+        if not appointment:
+            raise HTTPException(status_code=404, detail="Appointment not found")
+        
+        if appointment.id_status_type not in (1, 2):
+            raise HTTPException(status_code=400, detail="Only active appointments can be closed")
+        
+        update_data = UpdateAppointment(id=appointment_id, id_status_type=3)
+        updated_appointment = await AppointemntRepository.update_appointment(db, update_data)
+        
+        if not updated_appointment:
+            raise HTTPException(status_code=500, detail="Failed to update appointment")
+        
+        points_to_add = appointment.final_sum * 0.07
+        await ClientBalanceRepository.update_balance(db, appointment.id_client, permanent_delta=points_to_add)
+        
+        accrual_type = await TypeAccrualRepository.get_by_title(db, 'appointment')
+        direction = await DirectionRepository.get_by_title(db, 'accrual')
+        point_type = await PointTypeRepository.get_by_title(db, 'permanent')
+        log_dto = PointLogsCreateDTO(
+            id_client=appointment.id_client,
+            id_point_type=point_type.id,
+            points=points_to_add,
+            id_direction=direction.id,
+            id_type_accrual=accrual_type.id,
+            expiration_date=None
+        )
+        await point_logs_service.create_log(db, log_dto)
+        
+        closed_count_query = select(func.count(MakeAppointmentModel.id)).where(
+            and_(
+                MakeAppointmentModel.id_client == appointment.id_client,
+                MakeAppointmentModel.id_status_type == 3
+            )
+        )
+        closed_count = (await db.execute(closed_count_query)).scalar() or 0
+        
+        if closed_count == 1:
+            client = await ClientRepository.get_client(db, appointment.id_client)
+            referral = await ReferralsRepository.get_referrals_phone(db, client.phone)
+            if referral:
+                inviter_id = referral.id_client
+                await ClientBalanceRepository.update_balance(db, inviter_id, permanent_delta=500)
+                
+                accrual_type_ref = await TypeAccrualRepository.get_by_title(db, 'referral')
+                log_dto_inv = PointLogsCreateDTO(
+                    id_client=inviter_id,
+                    id_point_type=point_type.id,
+                    points=500,
+                    id_direction=direction.id,
+                    id_type_accrual=accrual_type_ref.id,
+                    expiration_date=None
+                )
+                await point_logs_service.create_log(db, log_dto_inv)
+        
+        return updated_appointment
+
+    async def cancel_appointment(self, db: AsyncSession, appointment_id: int):
+        query = select(MakeAppointmentModel).where(MakeAppointmentModel.id == appointment_id)
+        result = await db.execute(query)
+        appointment = result.scalar_one_or_none()
+        
+        if not appointment:
+            raise HTTPException(status_code=404, detail="Appointment not found")
+        
+        if appointment.id_status_type not in (1, 2):
+            raise HTTPException(status_code=400, detail="Only active appointments can be cancelled")
+        
+        update_data = UpdateAppointment(id=appointment_id, id_status_type=4)
+        updated_appointment = await AppointemntRepository.update_appointment(db, update_data)
+        
+        if not updated_appointment:
+            raise HTTPException(status_code=500, detail="Failed to update appointment")
+        
+        service = await ServiceRepository.get_service(db, appointment.id_services)
+        used_points = service.price - appointment.final_sum  # Рассчитываем на лету
+        
+        if used_points > 0:
+            # Возврат только permanent (temporary не возвращаем)
+            await ClientBalanceRepository.update_balance(db, appointment.id_client, permanent_delta=used_points)
+            
+            accrual_type = await TypeAccrualRepository.get_by_title(db, 'appointment')  # Или 'cancel', если есть
+            direction = await DirectionRepository.get_by_title(db, 'accrual')
+            point_type = await PointTypeRepository.get_by_title(db, 'permanent')
+            log_dto = PointLogsCreateDTO(
+                id_client=appointment.id_client,
+                id_point_type=point_type.id,
+                points=used_points,
+                id_direction=direction.id,
+                id_type_accrual=accrual_type.id,
+                expiration_date=None
+            )
+            await point_logs_service.create_log(db, log_dto)
+        
+        return updated_appointment
 
     async def get_appointment_client(self, db:AsyncSession, client_id:int):
         appointments = await AppointemntRepository.get_appointment_client(db, client_id)
@@ -270,70 +319,3 @@ class AppointmentService:
         now = datetime.now()
         result = sorted(result, key=lambda x: abs(x.date - now))
         return result
-    
-    async def close_appointment(self, db: AsyncSession, appointment_id: int):
-        # Находим запись
-        query = select(MakeAppointmentModel).where(MakeAppointmentModel.id == appointment_id)
-        result = await db.execute(query)
-        appointment = result.scalar_one_or_none()
-        
-        if not appointment:
-            raise HTTPException(status_code=404, detail="Appointment not found")
-        
-        if appointment.id_status_type not in (1, 2):
-            raise HTTPException(status_code=400, detail="Only active appointments can be closed")
-        
-        # Меняем статус на 3 (closed)
-        update_data = UpdateAppointment(id=appointment_id, id_status_type=3)
-        updated_appointment = await AppointemntRepository.update_appointment(db, update_data)
-        
-        if not updated_appointment:
-            raise HTTPException(status_code=500, detail="Failed to update appointment")
-        
-        # Начислить 7% от final_sum (permanent)
-        points_to_add = appointment.final_sum * 0.07
-        await ClientBalanceRepository.update_balance(db, appointment.id_client, permanent_delta=points_to_add)
-        
-        # Лог для начисления
-        accrual_type = await TypeAccrualRepository.get_by_title(db, 'appointment')
-        direction = await DirectionRepository.get_by_title(db, 'accrual')
-        point_type = await PointTypeRepository.get_by_title(db, 'permanent')
-        log_dto = PointLogsCreateDTO(
-            id_client=appointment.id_client,
-            id_point_type=point_type.id,
-            points=points_to_add,
-            id_direction=direction.id,
-            id_type_accrual=accrual_type.id,
-            expiration_date=None
-        )
-        await point_logs_service.create_log(db, log_dto)
-        
-        # Проверить, первый ли closed прием для реферала
-        closed_count_query = select(func.count(MakeAppointmentModel.id)).where(
-            and_(
-                MakeAppointmentModel.id_client == appointment.id_client,
-                MakeAppointmentModel.id_status_type == 3
-            )
-        )
-        closed_count = (await db.execute(closed_count_query)).scalar() or 0
-        
-        if closed_count == 1:  # Первый closed
-            client = await ClientRepository.get_client(db, appointment.id_client)
-            referral = await ReferralsRepository.get_referrals_phone(db, client.phone)  # Используем существующий метод, но он возвращает id, так что get full
-            if referral:
-                inviter_id = referral.id_client  # Предполагаем, что get_referrals_phone возвращает full ReferralModel
-                await ClientBalanceRepository.update_balance(db, inviter_id, permanent_delta=500)
-                
-                # Лог для приглашающего
-                accrual_type_ref = await TypeAccrualRepository.get_by_title(db, 'referral')
-                log_dto_inv = PointLogsCreateDTO(
-                    id_client=inviter_id,
-                    id_point_type=point_type.id,  # permanent
-                    points=500,
-                    id_direction=direction.id,  # accrual
-                    id_type_accrual=accrual_type_ref.id,
-                    expiration_date=None
-                )
-                await point_logs_service.create_log(db, log_dto_inv)
-        
-        return updated_appointment
