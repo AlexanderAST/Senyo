@@ -7,7 +7,7 @@ class PointLogsCreateDTO(BaseModel):
     id_point_type: int
     points: float
     id_direction: int
-    id_type_accrual: int  # Учёл опечатку из модели (accural вместо accrual)
+    id_type_accural: int  # Учёл опечатку из модели (accural вместо accrual)
     expiration_date: Optional[date] = None
 
 class PointLogsUI(BaseModel):

@@ -11,7 +11,7 @@ class PointLogsService:
             id_point_type=log_data.id_point_type,
             points=log_data.points,
             id_direction=log_data.id_direction,
-            id_type_accrual=log_data.id_type_accrual,  # Опечатка сохранена
+            id_type_accural=log_data.id_type_accrual,  # Опечатка сохранена
             expiration_date=log_data.expiration_date
         )
         return await PointLogsRepository.create_log(db, new_log)
