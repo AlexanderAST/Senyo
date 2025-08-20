@@ -36,3 +36,11 @@ async def update_promotions(promotion:PromotionsUpdate, db:AsyncSession = Depend
         return {"status":"updated success"}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+    
+@router.post("/admin/run-daily-check")
+async def run_daily_promo_check(db: AsyncSession = Depends(get_db)):
+    try:
+        await promotions_service.daily_promo_check(db)
+        return {"status": "success", "message": "Daily promo check executed manually"}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
