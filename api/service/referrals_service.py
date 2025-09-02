@@ -15,7 +15,17 @@ point_logs_service = PointLogsService()
 class ReferralsService:
     
     async def create_referral(self, db:AsyncSession, new_referrals_data:CreateReferralRequestDTO):
-        
+        client = await ClientRepository.get_client(db, new_referrals_data.id_client)
+        if not client:
+            raise HTTPException(status_code=404, detail="Client not found")
+    
+        if new_referrals_data.refferal_phone == client.phone:  # Предполагаю, что у ClientModel есть поле phone
+            raise HTTPException(status_code=400, detail="Cannot refer yourself")
+    
+        existing_referral = await ReferralsRepository.get_referrals_phone(db, new_referrals_data.refferal_phone)
+        if existing_referral:
+            raise HTTPException(status_code=400, detail="Referral phone already exists")
+    
         referrals_data = ReferralDTO(
             id_client=new_referrals_data.id_client,
             refferal_phone=new_referrals_data.refferal_phone,
