@@ -63,5 +63,7 @@ class ClientRepository:
     @classmethod
     async def get_clients_by_gender(cls, db: AsyncSession, gender_id: int) -> list[ClientModel]:
         query = select(ClientModel).where(ClientModel.id_gender == gender_id)
+        if(gender_id == 3):
+            query = select(ClientModel)
         result = await db.execute(query)
         return result.scalars().all()
