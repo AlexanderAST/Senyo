@@ -8,7 +8,7 @@ class ReferralsRepository:
     async def create_referral(cls, db:AsyncSession, referrals_data:ReferralDTO):
         new_referral= ReferralsModel(
             id_client=referrals_data.id_client,
-            referral_phone = referrals_data.refferal_phone,
+            referral_phone = referrals_data.referral_phone,
             is_active = referrals_data.is_active
         )
         

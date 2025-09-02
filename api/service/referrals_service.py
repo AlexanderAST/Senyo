@@ -19,16 +19,16 @@ class ReferralsService:
         if not client:
             raise HTTPException(status_code=404, detail="Client not found")
     
-        if new_referrals_data.refferal_phone == client.phone:  # Предполагаю, что у ClientModel есть поле phone
+        if new_referrals_data.referral_phone == client.phone:  # Предполагаю, что у ClientModel есть поле phone
             raise HTTPException(status_code=400, detail="Cannot refer yourself")
     
-        existing_referral = await ReferralsRepository.get_referrals_phone(db, new_referrals_data.refferal_phone)
+        existing_referral = await ReferralsRepository.get_referrals_phone(db, new_referrals_data.referral_phone)
         if existing_referral:
             raise HTTPException(status_code=400, detail="Referral phone already exists")
     
         referrals_data = ReferralDTO(
             id_client=new_referrals_data.id_client,
-            refferal_phone=new_referrals_data.refferal_phone,
+            referral_phone=new_referrals_data.referral_phone,
             is_active=False
         )
         
@@ -42,7 +42,7 @@ class ReferralsService:
             result.append(ReferralDTO(
                 id = a.id,
                 id_client = a.id_client,
-                refferal_phone = a.referral_phone,
+                referral_phone = a.referral_phone,
                 is_active = a.is_active
             ))
         return result
