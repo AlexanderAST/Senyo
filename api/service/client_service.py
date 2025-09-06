@@ -148,49 +148,51 @@ class ClientService:
         return result
     
     async def add_points_to_client(
-        self,
-        db: AsyncSession,
-        client_id: int,
-        permanent_delta: float = 0.0,
-        temporary_delta: float = 0.0
-    ):
-        updated_balance = await ClientBalanceRepository.update_balance(
-            db=db,
-            client_id=client_id,
-            permanent_delta=permanent_delta,
-            temporary_delta=temporary_delta
-        )
+     self,
+     db: AsyncSession,
+     client_id: int,
+     permanent_delta: float = 0.0,
+     temporary_delta: float = 0.0,
+     deduct_temporary_first: bool = True
+    ):  
+     updated_balance = await ClientBalanceRepository.update_balance(
+         db=db,
+         client_id=client_id,
+         permanent_delta=permanent_delta,
+         temporary_delta=temporary_delta,
+         deduct_temporary_first=deduct_temporary_first
+     )
 
-        accrual_type = await TypeAccrualRepository.get_by_title(db, 'manual')
+     accrual_type = await TypeAccrualRepository.get_by_title(db, 'manual')
 
-        # Лог для permanent
-        if permanent_delta != 0:
-            direction_title = 'accrual' if permanent_delta > 0 else 'deduction'
-            direction = await DirectionRepository.get_by_title(db, direction_title)
-            point_type = await PointTypeRepository.get_by_title(db, 'permanent')
-            log_dto = PointLogsCreateDTO(
-                id_client=client_id,
-                id_point_type=point_type.id,
-                points=abs(permanent_delta),
-                id_direction=direction.id,
-                id_type_accural=accrual_type.id,
-                expiration_date=None  # Для permanent нет expiration
-            )
-            await point_logs_service.create_log(db, log_dto)
+     # Лог для permanent
+     if permanent_delta != 0:
+         direction_title = 'accrual' if permanent_delta > 0 else 'deduction'
+         direction = await DirectionRepository.get_by_title(db, direction_title)
+         point_type = await PointTypeRepository.get_by_title(db, 'permanent')
+         log_dto = PointLogsCreateDTO(
+             id_client=client_id,
+             id_point_type=point_type.id,
+             points=abs(permanent_delta),
+             id_direction=direction.id,
+             id_type_accural=accrual_type.id,
+             expiration_date=None  # Для permanent нет expiration
+         )
+         await point_logs_service.create_log(db, log_dto)
 
-        # Лог для temporary
-        if temporary_delta != 0:
-            direction_title = 'accrual' if temporary_delta > 0 else 'deduction'
-            direction = await DirectionRepository.get_by_title(db, direction_title)
-            point_type = await PointTypeRepository.get_by_title(db, 'temporary')
-            log_dto = PointLogsCreateDTO(
-                id_client=client_id,
-                id_point_type=point_type.id,
-                points=abs(temporary_delta),
-                id_direction=direction.id,
-                id_type_accural=accrual_type.id,
-                expiration_date=None  # Укажи, если есть логика для expiration
-            )
-            await point_logs_service.create_log(db, log_dto)
+     # Лог для temporary
+     if temporary_delta != 0:
+         direction_title = 'accrual' if temporary_delta > 0 else 'deduction'
+         direction = await DirectionRepository.get_by_title(db, direction_title)
+         point_type = await PointTypeRepository.get_by_title(db, 'temporary')
+         log_dto = PointLogsCreateDTO(
+             id_client=client_id,
+             id_point_type=point_type.id,
+             points=abs(temporary_delta),
+             id_direction=direction.id,
+             id_type_accural=accrual_type.id,
+             expiration_date=None  # Укажи, если есть логика для expiration
+         )
+         await point_logs_service.create_log(db, log_dto)
 
-        return updated_balance
+     return updated_balance

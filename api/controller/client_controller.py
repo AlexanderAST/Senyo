@@ -57,7 +57,8 @@ async def add_points(
             db=db,
             client_id=dto.client_id,
             permanent_delta=dto.permanent_delta,
-            temporary_delta=dto.temporary_delta
+            temporary_delta=dto.temporary_delta,
+            deduct_temporary_first=dto.is_temporary_first,
         )
         return {"status": "success", "balance": {
             "permanent": result.permanent_points,

@@ -27,3 +27,4 @@ class ClientAddPointsDTO(BaseModel):
     client_id: int
     permanent_delta: float = 0.0
     temporary_delta: float = 0.0
+    is_temporary_first: bool = True

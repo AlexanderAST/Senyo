@@ -10,25 +10,38 @@ class ClientBalanceRepository:
         result = await db.execute(query)
         return result.scalars().first()
 
+
     @classmethod
-    async def update_balance(cls, db: AsyncSession, client_id: int, permanent_delta: float = 0.0, temporary_delta: float = 0.0) -> ClientBalanceModel | None:
+    async def update_balance(
+        cls, 
+        db: AsyncSession, 
+        client_id: int, 
+        permanent_delta: float = 0.0, 
+        temporary_delta: float = 0.0,
+        deduct_temporary_first: bool = True
+    ) -> ClientBalanceModel | None:
         balance = await cls.get_by_client_id(db, client_id)
         if not balance:
             return None
-
-        # Обработка списания (отрицательные дельты): сначала temporary, потом permanent
+    
         total_delta = permanent_delta + temporary_delta
         if total_delta < 0:
             deduction = abs(total_delta)
-            temp_deduct = min(deduction, balance.temporary_points)
-            balance.temporary_points -= temp_deduct
-            remaining_deduct = deduction - temp_deduct
-            balance.permanent_points -= remaining_deduct
+            if deduct_temporary_first:
+                temp_deduct = min(deduction, balance.temporary_points)
+                balance.temporary_points -= temp_deduct
+                remaining_deduct = deduction - temp_deduct
+                balance.permanent_points -= remaining_deduct
+            else:
+                perm_deduct = min(deduction, balance.permanent_points)
+                balance.permanent_points -= perm_deduct
+                remaining_deduct = deduction - perm_deduct
+                balance.temporary_points -= remaining_deduct
         else:
             # Начисление: добавляем как указано
             balance.permanent_points += permanent_delta
             balance.temporary_points += temporary_delta
-
+    
         await db.commit()
         await db.refresh(balance)
         return balance
