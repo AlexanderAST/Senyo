@@ -12,6 +12,7 @@ from api.repository.direction_repository import DirectionRepository
 from api.repository.type_accrual_repository import TypeAccrualRepository
 from api.service.point_logs_service import PointLogsService
 from api.dto.point_logs_dto import PointLogsCreateDTO
+from api.repository.applied_promotion_repository import AppliedPromotionRepository
 
 
 point_logs_service = PointLogsService()
@@ -61,6 +62,10 @@ class PromotionsService:
         for promo in starting_promos:
             clients = await ClientRepository.get_clients_by_gender(db, promo.id_gender)  # Добавь метод в ClientRepository: select where id_gender == id_gender
             for client in clients:
+                applied = await AppliedPromotionRepository.get_by_client_and_promo(db, client.id, promo.id)
+                if applied:
+                    continue
+                
                 await ClientBalanceRepository.update_balance(db, client.id, temporary_delta=promo.added_points)
                 
                 # Лог
@@ -76,12 +81,17 @@ class PromotionsService:
                     expiration_date=promo.expiration_date
                 )
                 await point_logs_service.create_log(db, log_dto)
+                # Запись о применении
+                await AppliedPromotionRepository.create_applied(db, client.id, promo.id, today)
 
         # Списание для expiration_date == today
         ending_promos = await PromotionsRepository.get_by_expiration_date(db, today)  # Добавь метод
         for promo in ending_promos:
             clients = await ClientRepository.get_clients_by_gender(db, promo.id_gender)
             for client in clients:
+                applied = await AppliedPromotionRepository.get_by_client_and_promo(db, client.id, promo.id)
+                if not applied:
+                    continue
                 balance = await ClientBalanceRepository.get_by_client_id(db, client.id)
                 to_deduct = min(promo.added_points, balance.temporary_points)  # Max до начисленного
                 await ClientBalanceRepository.update_balance(db, client.id, temporary_delta=-to_deduct)

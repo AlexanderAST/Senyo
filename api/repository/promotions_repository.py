@@ -1,5 +1,5 @@
 from datetime import date
-from sqlalchemy import select
+from sqlalchemy import select,or_
 from sqlalchemy.ext.asyncio import AsyncSession
 from api.dto.promotions_dto import PromotionsCreate, PromotionsUpdate
 from api.domain.promotion_model import PromotionModel
@@ -68,5 +68,15 @@ class PromotionsRepository:
     @classmethod
     async def get_by_expiration_date(cls, db: AsyncSession, expiration_date: date) -> list[PromotionModel]:
         query = select(PromotionModel).where(PromotionModel.expiration_date == expiration_date)
+        result = await db.execute(query)
+        return result.scalars().all()
+    
+    @classmethod
+    async def get_active_for_gender(cls, db:AsyncSession, gender_id:int,today:date) ->list[PromotionModel]:
+        query = select(PromotionModel).where(
+            PromotionModel.start_date <=today,
+            PromotionModel.expiration_date>today,
+            or_(PromotionModel.id_gender == gender_id, PromotionModel.id_gender ==3)
+        )
         result = await db.execute(query)
         return result.scalars().all()
