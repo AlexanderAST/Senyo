@@ -80,3 +80,7 @@ class PromotionsRepository:
         )
         result = await db.execute(query)
         return result.scalars().all()
+    
+    @classmethod
+    async def get_by_id(cls, db: AsyncSession, id: int) -> PromotionModel | None:   
+        return await db.get(PromotionModel, id)

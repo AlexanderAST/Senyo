@@ -1,5 +1,5 @@
 from datetime import date
-from sqlalchemy import select
+from sqlalchemy import select,delete
 from sqlalchemy.ext.asyncio import AsyncSession
 from api.domain.applied_promotion_model import AppliedPromotionModel
 
@@ -25,3 +25,15 @@ class AppliedPromotionRepository:
         )
         result = await db.execute(query)
         return result.scalars().first()
+    
+    @classmethod
+    async def get_all_by_promotion(cls, db: AsyncSession, promo_id: int) -> list[AppliedPromotionModel]:
+        query = select(AppliedPromotionModel).where(AppliedPromotionModel.id_promotion == promo_id)
+        result = await db.execute(query)
+        return result.scalars().all()
+
+    @classmethod
+    async def delete_all_by_promotion(cls, db: AsyncSession, promo_id: int):
+        stmt = delete(AppliedPromotionModel).where(AppliedPromotionModel.id_promotion == promo_id)
+        await db.execute(stmt)
+        await db.commit()

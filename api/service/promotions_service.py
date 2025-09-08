@@ -24,9 +24,40 @@ class PromotionsService:
     async def create_promotion(self, db:AsyncSession, new_promotion:PromotionsCreate):
         return await PromotionsRepository.create_promotions(db, new_promotion)
     
-    async def delete_promotiom(self, db:AsyncSession, id:int):
-        id = await PromotionsRepository.delete_promotion(db, id)
-        return {"status":"success", "id":id}
+    async def delete_promotiom(self, db: AsyncSession, id: int):
+        promo = await PromotionsRepository.get_by_id(db, id)  # Добавь метод в repo: await db.get(PromotionModel, id)
+        if not promo:
+            return {"status": "not found"}
+
+        # Получи applied для списания баллов
+        applied_list = await AppliedPromotionRepository.get_all_by_promotion(db, promo.id)
+        accrual_type = await TypeAccrualRepository.get_by_title(db, 'promo')
+        direction_ded = await DirectionRepository.get_by_title(db, 'deduction')
+        point_type = await PointTypeRepository.get_by_title(db, 'temporary')
+
+        for applied in applied_list:
+            balance = await ClientBalanceRepository.get_by_client_id(db, applied.id_client)
+            if balance:
+                to_deduct = min(promo.added_points, balance.temporary_points)
+                await ClientBalanceRepository.update_balance(db, applied.id_client, temporary_delta=-to_deduct)
+
+                # Лог о списании из-за удаления промо
+                log_dto = PointLogsCreateDTO(
+                    id_client=applied.id_client,
+                    id_point_type=point_type.id,
+                    points=to_deduct,
+                    id_direction=direction_ded.id,
+                    id_type_accural=accrual_type.id,
+                    expiration_date=promo.expiration_date  # Или None, если удаляем вручную
+                )
+                await point_logs_service.create_log(db, log_dto)
+
+        # Удали applied
+        await AppliedPromotionRepository.delete_all_by_promotion(db, promo.id)
+
+        # Удали промо
+        deleted_id = await PromotionsRepository.delete_promotion(db, id)
+        return {"status": "success", "id": deleted_id}
     
     async def get_promotions(self, db:AsyncSession) -> list[PromotionsUI]:
         promotions = await PromotionsRepository.get_promotions(db)
