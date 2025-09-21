@@ -3,6 +3,8 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 from api.service.make_appointment_service import AppointmentService
 from api.dto.make_appointment_dto import RequestAppointment, UpdateAppointment, AppointmentUI
+from fastapi import Query
+from datetime import datetime
 
 router = APIRouter()
 appointment_service = AppointmentService()
@@ -55,5 +57,18 @@ async def cancel_client_appointment(appointment_id: int, db: AsyncSession = Depe
 async def close_appointment(appointment_id: int, db: AsyncSession = Depends(get_db)):
     try:
         return await appointment_service.close_appointment(db, appointment_id)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+    
+@router.get("/available-times")
+async def get_available_times(
+    date: datetime = Query(..., description="Дата в формате YYYY-MM-DD"),
+    id_services: int = Query(..., description="ID услуги"),
+    db: AsyncSession = Depends(get_db)
+):
+    try:
+        # Конвертируем date в naive datetime без timezone
+        naive_date = date.replace(tzinfo=None)
+        return await appointment_service.get_available_times(db, naive_date, id_services)
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))

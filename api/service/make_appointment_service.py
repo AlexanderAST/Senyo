@@ -11,7 +11,7 @@ from api.repository.status_repository import StatusTypeRepository
 from datetime import datetime
 from sqlalchemy.ext.asyncio import AsyncSession
 from api.repository.make_appointment_repository import AppointemntRepository
-from api.dto.make_appointment_dto import CreateAppointment, RequestAppointment, UpdateAppointment, AppointmentUI
+from api.dto.make_appointment_dto import AvailableTime, CreateAppointment, RequestAppointment, UpdateAppointment, AppointmentUI
 from sqlalchemy import select
 from sqlalchemy import func, and_
 from api.domain.make_appointment_model import MakeAppointmentModel  # Для query
@@ -20,6 +20,10 @@ from api.repository.direction_repository import DirectionRepository
 from api.repository.type_accrual_repository import TypeAccrualRepository
 from api.service.point_logs_service import PointLogsService
 from api.dto.point_logs_dto import PointLogsCreateDTO
+from datetime import datetime, timedelta, time
+from api.repository.services_repository import ServiceRepository
+from fastapi import HTTPException  
+from datetime import datetime, timedelta, time
 
 
 point_logs_service = PointLogsService()
@@ -319,3 +323,53 @@ class AppointmentService:
         now = datetime.now()
         result = sorted(result, key=lambda x: abs(x.date - now))
         return result
+    
+
+
+    async def get_available_times(self, db: AsyncSession, target_date: datetime, id_services: int) -> AvailableTime:
+        # Получаем услугу и рассчитываем длительность в минутах
+        new_service = await ServiceRepository.get_service(db, id_services)
+        if not new_service:
+            raise HTTPException(status_code=404, detail="Услуга не найдена")
+        duration_time = new_service.duration  # datetime.time объект
+        total_minutes = duration_time.hour * 60 + duration_time.minute
+        new_duration = timedelta(minutes=total_minutes)
+    
+        # Получаем активные записи
+        appointments = await AppointemntRepository.get_active_appointments_on_date(db, target_date)
+        appointments = sorted(appointments, key=lambda a: a.date)
+    
+        # Рабочий день
+        start_time = target_date.replace(hour=9, minute=0, second=0, microsecond=0)
+        end_time = target_date.replace(hour=21, minute=0, second=0, microsecond=0)
+    
+        # Занятые интервалы
+        occupied = []
+        for appt in appointments:
+            appt_service = await ServiceRepository.get_service(db, appt.id_services)
+            appt_duration_time = appt_service.duration
+            appt_total_minutes = appt_duration_time.hour * 60 + appt_duration_time.minute
+            appt_duration = timedelta(minutes=appt_total_minutes)
+            appt_end = appt.date + appt_duration
+            occupied.append((appt.date, appt_end))
+    
+        # Генерация слотов с шагом 30 мин
+        available_slots = []
+        current_slot = start_time
+        step = timedelta(minutes=30)
+        while current_slot <= end_time:
+            slot_end = current_slot + new_duration
+    
+            # Проверка пересечения
+            overlaps = any(
+                max(current_slot, occ_start) < min(slot_end, occ_end)
+                for occ_start, occ_end in occupied
+            )
+    
+            # Добавляем слот, если нет пересечения (для 21:00 игнорируем превышение end_time)
+            if not overlaps and current_slot <= end_time:
+                available_slots.append(current_slot.strftime("%H:%M"))
+    
+            current_slot += step
+    
+        return AvailableTime(available_slots=available_slots)

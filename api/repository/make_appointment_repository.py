@@ -1,8 +1,10 @@
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import update
+from datetime import timedelta
 from api.domain.make_appointment_model import MakeAppointmentModel
 from api.dto.make_appointment_dto import CreateAppointment, UpdateAppointment
+from sqlalchemy import and_
 
 
 class AppointemntRepository:
@@ -67,3 +69,17 @@ class AppointemntRepository:
         )
         await db.execute(stmt)
         await db.commit()
+    
+    @classmethod
+    async def get_active_appointments_on_date(cls, db: AsyncSession, target_date: datetime):
+        start_of_day = target_date.replace(hour=0, minute=0, second=0, microsecond=0)
+        end_of_day = start_of_day + timedelta(days=1)
+        query = select(MakeAppointmentModel).where(
+            and_(
+                MakeAppointmentModel.date >= start_of_day,
+                MakeAppointmentModel.date < end_of_day,
+                MakeAppointmentModel.id_status_type.in_([1, 2])
+            )
+        )
+        result = await db.execute(query)
+        return result.scalars().all()

@@ -61,3 +61,6 @@ class AppointmentUI(BaseModel):
     date:datetime
     final_sum:float
     used_points: Optional[int] = None
+    
+class AvailableTime(BaseModel):
+    available_slots: list[str]
