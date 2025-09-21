@@ -5,6 +5,7 @@ from datetime import timedelta
 from api.domain.make_appointment_model import MakeAppointmentModel
 from api.dto.make_appointment_dto import CreateAppointment, UpdateAppointment
 from sqlalchemy import and_
+from datetime import datetime
 
 
 class AppointemntRepository:
