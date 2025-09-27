@@ -2,6 +2,7 @@ from api.dto.address_dto import AddressDTO
 from pydantic import BaseModel
 from typing import Optional
 
+
 class ClientCreateDTO(BaseModel):
     telegram_id: int
 
