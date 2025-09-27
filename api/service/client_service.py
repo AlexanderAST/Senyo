@@ -18,21 +18,39 @@ from api.dto.point_logs_dto import PointLogsCreateDTO
 from datetime import date
 from api.repository.promotions_repository import PromotionsRepository
 from api.repository.applied_promotion_repository import AppliedPromotionRepository
+import logging
 
+logger = logging.getLogger(__name__)
 referrals_service = ReferralsService()
 point_logs_service = PointLogsService()
 class ClientService:
             
     async def create_client(self, db: AsyncSession, client_data: ClientCreateDTO):
-        client = await ClientRepository.create_client(db, client_data)
+        try:
+            client = await ClientRepository.create_client(db, client_data)
+            logger.info(f"Client created: ID {client.id}")  # Лог: успех создания клиента
+        except Exception as e:
+            logger.error(f"Error in ClientRepository.create_client: {str(e)}")  # Лог: ошибка на создании клиента
+            raise  # Поднимаем, чтобы router поймал
 
-        await ClientBalanceRepository.create_balance(
-            db=db,
-            client_id=client.id,
-            permanent=0.0,
-            temporary=0.0
-        )
-        await self.apply_active_promotions(db,client.id)
+        try:
+            await ClientBalanceRepository.create_balance(
+                db=db,
+                client_id=client.id,
+                permanent=0.0,
+                temporary=0.0
+            )
+            logger.info(f"Balance created for client {client.id}")
+        except Exception as e:
+            logger.error(f"Error in create_balance: {str(e)}")
+            raise
+
+        try:
+            await self.apply_active_promotions(db, client.id)
+            logger.info(f"Promotions applied for client {client.id}")
+        except Exception as e:
+            logger.error(f"Error in apply_active_promotions: {str(e)}")
+            raise
 
         return client
     

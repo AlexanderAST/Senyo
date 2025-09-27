@@ -3,16 +3,20 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from api.service.client_service import ClientService
 from api.dto.client_dto import ClientAddPointsDTO, ClientCreateDTO, ClientUI, ClientUpdateDTO
 from api.database import get_db
+import logging
+
+logger = logging.getLogger(__name__)
 
 router= APIRouter()
 client_service = ClientService()
 
 @router.post("/client")
-async def sing_up(client:ClientCreateDTO, db:AsyncSession = Depends(get_db)):
+async def sing_up(client: ClientCreateDTO, db: AsyncSession = Depends(get_db)):
     try:
         return await client_service.create_client(db, client)
     except Exception as e:
-        raise HTTPException(status_code=404, detail=str(e))
+        logger.error(f"Error creating client: {str(e)}")  # Лог: детальная ошибка в backend-консоли
+        raise HTTPException(status_code=500, detail=str(e))  # Изменено на 500 для серверных ошибок
     
 
 @router.put("/client")
