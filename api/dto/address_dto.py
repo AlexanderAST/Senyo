@@ -1,3 +1,4 @@
+from typing import Optional
 from pydantic import BaseModel
 
 class AddressCreateDTO(BaseModel):
@@ -10,7 +11,7 @@ class AddressDTO(BaseModel):
     id: int
     address: str
     id_client: int
-    status: str
+    status: Optional[str] = None
     
 
 

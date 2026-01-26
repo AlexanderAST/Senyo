@@ -19,6 +19,7 @@ from api.domain.services_model import ServicesModel
 from api.domain.make_appointment_model import MakeAppointmentModel
 from api.domain.client_balance import ClientBalanceModel
 from api.domain.point_logs_model import PointLogsModel
+from api.domain.applied_promotion_model import AppliedPromotionModel
 
 
 # this is the Alembic Config object, which provides

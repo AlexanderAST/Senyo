@@ -2,22 +2,21 @@ from api.database import get_db
 from fastapi import APIRouter, HTTPException, Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 from api.service.referrals_service import ReferralsService
-from api.repository.refferal_repository import ReferralsRepository
-from api.dto.referral_dto import CreateReferralRequestDTO, UpdateReferralDTO
+from api.dto.referral_dto import CreateReferralRequestDTO, ReferralDTO, UpdateReferralDTO
 
 router = APIRouter()
-referrals_service = ReferralsService(ReferralsRepository())
+referrals_service = ReferralsService()
 
 
 @router.post("/referrals")
-async def create_referrals(referrals:CreateReferralRequestDTO, db:AsyncSession=Depends(get_db)):  
+async def create_referrals(referrals:CreateReferralRequestDTO, db:AsyncSession=Depends(get_db),response_model=ReferralDTO):  
     try:
        
         return await referrals_service.create_referral(db, referrals)
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-@router.get("/referrals/{client_id}")
+@router.get("/referrals/{client_id}", response_model =list[ReferralDTO])
 async def get_referrals(client_id:int, db:AsyncSession= Depends(get_db)):
     try:
         return await referrals_service.get_referrals(db, client_id)

@@ -16,7 +16,6 @@ class MakeAppointmentModel(Base):
     id_address = Column(Integer, ForeignKey(AddressesModel.id))
     address = relationship(AddressesModel, foreign_keys=[id_address])
     date = Column(TIMESTAMP)
-    title = Column(String)
     id_status_type = Column(Integer, ForeignKey(StatusTypeModel.id))
     status_type = relationship(StatusTypeModel, foreign_keys=[id_status_type])
     final_sum = Column(Float)

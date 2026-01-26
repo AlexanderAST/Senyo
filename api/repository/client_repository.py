@@ -4,7 +4,8 @@ from api.domain.client_model import ClientModel
 from api.dto.client_dto import ClientCreateDTO, ClientUpdateDTO
 
 class ClientRepository:
-    async def create_client(self, db:AsyncSession, client_data: ClientCreateDTO):
+    @classmethod
+    async def create_client(cls, db:AsyncSession, client_data: ClientCreateDTO):
         new_client = ClientModel(
             telegram_id = client_data.telegram_id
         )
@@ -14,7 +15,8 @@ class ClientRepository:
         await db.refresh(new_client)
         return new_client
     
-    async def update_client(self, db:AsyncSession, client_data: ClientUpdateDTO):
+    @classmethod
+    async def update_client(cls, db:AsyncSession, client_data: ClientUpdateDTO):
         client = await db.get(ClientModel, client_data.id)
         
         if not client:
@@ -31,14 +33,37 @@ class ClientRepository:
 
         return client
     
-    async def get_client(self, db:AsyncSession, id:int):
+    @classmethod
+    async def get_client(cls, db:AsyncSession, id:int):
         query = select(ClientModel).where(ClientModel.id == id)
         result = await db.execute(query)
 
         return result.scalars().first()
     
-    async def get_clients(self, db:AsyncSession):
+    @classmethod
+    async def get_clients(cls, db:AsyncSession):
         query = select(ClientModel)
         result = await db.execute(query)
         
+        return result.scalars().all()
+    
+    @classmethod
+    async def get_by_telegram_id(cls,db:AsyncSession, telegram_id:int):
+        query = select(ClientModel).where(ClientModel.telegram_id==telegram_id)
+        result = await db.execute(query)
+
+        return result.scalars().first()
+    
+    @classmethod
+    async def get_by_phone(cls, db: AsyncSession, phone: str) -> ClientModel | None:
+        query = select(ClientModel).where(ClientModel.phone == phone)
+        result = await db.execute(query)
+        return result.scalars().first()
+
+    @classmethod
+    async def get_clients_by_gender(cls, db: AsyncSession, gender_id: int) -> list[ClientModel]:
+        query = select(ClientModel).where(ClientModel.id_gender == gender_id)
+        if(gender_id == 3):
+            query = select(ClientModel)
+        result = await db.execute(query)
         return result.scalars().all()

@@ -5,9 +5,15 @@ from api.dto.services_dto import CreateService
 
 
 class ServicesService:
-    def __init__(self, service_repository:ServiceRepository):
-        self.service_repository = service_repository
-        
     
     async def create_service(self, db:AsyncSession, service = CreateService):
-        return await self.service_repository.create_service(db, service)
+        return await ServiceRepository.create_service(db, service)
+    
+
+    async def get_services(self, db:AsyncSession,):
+        return await ServiceRepository.get_all_services(db)
+    
+    async def delete_service(self, db:AsyncSession, id:int):
+        id = await ServiceRepository.delete_service(db, id)
+        return {"status":"success", "id":id}
+    

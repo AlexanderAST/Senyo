@@ -1,16 +1,21 @@
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy import update
+from datetime import timedelta
 from api.domain.make_appointment_model import MakeAppointmentModel
 from api.dto.make_appointment_dto import CreateAppointment, UpdateAppointment
+from sqlalchemy import and_
+from datetime import datetime
 
 
 class AppointemntRepository:
-    async def create_appointment(self, db:AsyncSession, appiontment:CreateAppointment):
+
+    @classmethod
+    async def create_appointment(cls, db:AsyncSession, appiontment:CreateAppointment):
         new_appointment = MakeAppointmentModel(
             id_client = appiontment.id_client,
             id_address = appiontment.id_address,
             date = appiontment.date,
-            title = appiontment.title,
             id_status_type = appiontment.id_status_type,
             final_sum = appiontment.final_sum,
             id_services = appiontment.id_services,
@@ -23,19 +28,22 @@ class AppointemntRepository:
         
         return new_appointment
     
-    async def get_appointment_client(self, db:AsyncSession, client_id:int):
+    @classmethod
+    async def get_appointment_client(cls, db:AsyncSession, client_id:int):
         query = select(MakeAppointmentModel).where(MakeAppointmentModel.id_client == client_id)
         result = await db.execute(query)
         
         return result.scalars().all()
     
-    async def get_appointments(self, db:AsyncSession):
+    @classmethod
+    async def get_appointments(cls, db:AsyncSession):
         query = select(MakeAppointmentModel)
         result = await db.execute(query)
         
         return result.scalars().all()
 
-    async def update_appointment(self, db:AsyncSession, appointment:UpdateAppointment):
+    @classmethod
+    async def update_appointment(cls, db:AsyncSession, appointment:UpdateAppointment):
         new_appointment = await db.get(MakeAppointmentModel, appointment.id)
         
         if not new_appointment:
@@ -53,3 +61,26 @@ class AppointemntRepository:
         
         return new_appointment
         
+    @classmethod
+    async def nullify_address_references(cls, db: AsyncSession, address_id: int):
+        stmt = (
+            update(MakeAppointmentModel)
+            .where(MakeAppointmentModel.id_address == address_id)
+            .values(id_address=None)
+        )
+        await db.execute(stmt)
+        await db.commit()
+    
+    @classmethod
+    async def get_active_appointments_on_date(cls, db: AsyncSession, target_date: datetime):
+        start_of_day = target_date.replace(hour=0, minute=0, second=0, microsecond=0)
+        end_of_day = start_of_day + timedelta(days=1)
+        query = select(MakeAppointmentModel).where(
+            and_(
+                MakeAppointmentModel.date >= start_of_day,
+                MakeAppointmentModel.date < end_of_day,
+                MakeAppointmentModel.id_status_type.in_([1, 2])
+            )
+        )
+        result = await db.execute(query)
+        return result.scalars().all()

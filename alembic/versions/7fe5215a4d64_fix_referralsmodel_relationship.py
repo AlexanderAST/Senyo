@@ -72,7 +72,7 @@ def upgrade() -> None:
     sa.Column('name', sa.String(), nullable=True),
     sa.Column('phone', sa.String(), nullable=True),
     sa.Column('id_gender', sa.Integer(), nullable=True),
-    sa.Column('telegram_id', sa.Integer(), nullable=True),
+    sa.Column('telegram_id', sa.BigInteger(), nullable=True),
     sa.ForeignKeyConstraint(['id_gender'], ['gender.id'], ),
     sa.PrimaryKeyConstraint('id')
     )

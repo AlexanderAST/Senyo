@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, ForeignKey
+from sqlalchemy import Column, Integer, String, ForeignKey,BigInteger
 from sqlalchemy.orm import relationship
 from api.database import Base
 from .gender_model import GenderModel
@@ -11,6 +11,6 @@ class ClientModel(Base):
     name = Column(String)
     phone = Column(String)
     id_gender = Column(Integer, ForeignKey(GenderModel.id))
-    telegram_id = Column(Integer)
+    telegram_id = Column(BigInteger)
     
     gender = relationship(GenderModel, foreign_keys=[id_gender])
